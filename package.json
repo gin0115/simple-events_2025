@@ -1,0 +1,68 @@
+{
+    "name": "wpcomsp-simple-events",
+    "version": "1.0.53",
+    "description": "A simple Gutenberg-first event management plugin that integrates with WooCommerce Box Office.",
+    "author": {
+        "name": "WordPress.com Special Projects Team",
+        "url": "https://wpspecialprojects.wordpress.com"
+    },
+    "license": "GPL-2.0-or-later",
+    "homepage": "https://github.com/a8cteam51/simple-events#readme",
+    "repository": "https://github.com/a8cteam51/simple-events",
+    "bugs": "https://github.com/a8cteam51/simple-events/issues",
+    "private": true,
+    "engines": {
+        "node": ">=20.10",
+        "npm": ">=10.2"
+    },
+    "devDependencies": {
+        "@woocommerce/components": "^12.3.0",
+        "@wordpress/scripts": "^29.0.0",
+        "md5": "^2.3.0",
+        "npm-run-all": "^4.1.5"
+    },
+    "browserslist": [
+        "extends @wordpress/browserslist-config"
+    ],
+    "scripts": {
+        "start": "npm-run-all --parallel start:**",
+        "build": "npm-run-all --sequential build:**",
+        "start:blocks": "wp-scripts start --webpack-src-dir=src/blocks --output-path=build/blocks",
+        "build:blocks": "wp-scripts build --webpack-src-dir=src/blocks --output-path=build/blocks",
+        "start:variations": "wp-scripts start --webpack-src-dir=src/variations --output-path=build/variations",
+        "start:admin": "wp-scripts start ./src/assets/js/admin.js --webpack-src-dir=src/assets/js --output-path=build/js",
+        "build:variations": "wp-scripts build --webpack-src-dir=src/variations --output-path=build/variations",
+        "build:admin": "wp-scripts build ./src/assets/js/admin.js --webpack-src-dir=src/assets/js --output-path=build/js",
+        "check-engines": "wp-scripts check-engines",
+        "check-licenses": "wp-scripts check-licenses",
+        "format:js": "wp-scripts format-js",
+        "lint:css": "wp-scripts lint-style",
+        "lint:css:fix": "wp-scripts lint-style --fix",
+        "lint:js": "wp-scripts lint-js",
+        "lint:js:fix": "wp-scripts lint-js --fix",
+        "lint:md:docs": "wp-scripts lint-md-docs",
+        "lint:md:js": "wp-scripts lint-md-js",
+        "lint:pkg-json": "wp-scripts lint-pkg-json",
+        "packages-update": "wp-scripts packages-update",
+        "test:e2e": "wp-scripts test-e2e",
+        "test:unit": "wp-scripts test-unit-js",
+        "deploy": "wp-scripts plugin-zip"
+    },
+    "files": [
+        "build",
+        "vendor",
+        "src/classes",
+        "src/templates",
+        "src/back-compat.php",
+        "src/event-functions.php",
+        "src/init.php",
+        "src/rest-api.php",
+        "src/template-functions.php",
+        "src/template-hooks.php",
+        "plugin.php",
+        "readme.md"
+    ],
+    "dependencies": {
+        "ajv": "^8.17.1"
+    }
+}
