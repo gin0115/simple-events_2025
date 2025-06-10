@@ -274,7 +274,8 @@ class SE_Blocks {
 		$event_location = get_post_meta( $post_ID, 'se_event_location', true );
 		$event_venue    = get_post_meta( $post_ID, 'se_event_venue', true );
 
-		$event_link = get_post_meta( $post_ID, 'se_event_external_link', true );
+		$event_link       = get_post_meta( $post_ID, 'se_event_external_link', true );
+		$event_link_label = get_post_meta( $post_ID, 'se_event_external_link_label', true );
 
 		// Previewing?
 		if ( isset( $attributes['eventLocation'] ) ) {
@@ -288,6 +289,10 @@ class SE_Blocks {
 		// Previewing?
 		if ( isset( $attributes['externalLink'] ) ) {
 			$event_link = $attributes['externalLink'];
+		}
+
+		if ( isset( $attributes['externalLinkLabel'] ) ) {
+			$event_link_label = $attributes['externalLinkLabel'];
 		}
 
 		if ( ! empty( $dates_output ) ) {
@@ -308,8 +313,7 @@ class SE_Blocks {
 			}
 
 			if ( ! empty( $event_link ) ) {
-				$link_text = __( 'Tickets', 'simple-events' );
-				$cta       = apply_filters( 'se_event_external_link_text', $link_text, $event_link );
+				$cta = apply_filters( 'se_event_external_link_text', $event_link_label, $event_link );
 
 				$output .= '<p><a class="wp-block-se-event-link" href="' . esc_url( $event_link ) . '" target="_blank" rel="nofollow">' . $cta . '</a></p>';
 			}
