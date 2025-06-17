@@ -89,10 +89,6 @@ const getStartAndEndDate = (dates) => {
 			moment.unix(date.datetime_end).utcOffset(OFFSET)
 		);
 
-		console.log('Processing only past dates.');
-		console.log({'dates' : dates, 'allStartDates': allStartDates, 'allEndDates': allEndDates});
-
-
 		// Return the latest start date and earliest end date.
 		return {
 			datetime_start: moment.max(allStartDates).unix().toString(),
