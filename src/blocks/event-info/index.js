@@ -136,7 +136,6 @@ const getStartAndEndDate = (dates) => {
 
 	// If we have no startDate or endDate, just get the first from dates.
 	if (!startDate) {
-
 		startDate = moment.unix(head(filteredDates).datetime_start).utcOffset(OFFSET);
 	}
 	if (!endDate) {
@@ -265,10 +264,7 @@ registerBlockType('simple-events/event-info', {
 			});
 		};
 
-
-
 		const maybeUpdateEventDateTime = (oldDate, newDate) => {
-
 			if (!isEqual(oldDate, newDate)) {
 				const updatedDates = sortBy(
 					meta?.se_event_dates.map((item) =>
