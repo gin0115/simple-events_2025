@@ -510,7 +510,6 @@ function se_event_update_event_query_dates( $event_id ) {
 	if ( null === $start_date && ! empty( $event_dates ) ) {
 		$all_start_dates = wp_list_pluck( $event_dates, 'datetime_start' );
 		rsort( $all_start_dates );
-		// get the latest start d
 		$start_date = $all_start_dates[0];
 	}
 	// If we have no end date, but we have dates, set to the latest.
@@ -518,7 +517,6 @@ function se_event_update_event_query_dates( $event_id ) {
 		// Get the latest end date.
 		$all_end_dates = wp_list_pluck( $event_dates, 'datetime_end' );
 		rsort( $all_end_dates );
-
 		$end_date = $all_end_dates[0];
 	}
 
