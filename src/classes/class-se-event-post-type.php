@@ -159,7 +159,7 @@ class SE_Event_Post_Type {
 	 *
 	 * @return boolean
 	 */
-	public static function is_protected_meta( bool $is_protected, string $meta_key, string $meta_type = 'string' ) {
+	public static function is_protected_meta( bool $is_protected, string $meta_key, string $meta_type = 'string' ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
 		$protected_keys = array( 'se_event_date_end', 'se_event_date_start' );
 
 		if ( in_array( $meta_key, $protected_keys, true ) ) {
@@ -233,7 +233,7 @@ class SE_Event_Post_Type {
 				'object_subtype' => self::$post_type,
 				'auth_callback'  => function () {
 					return current_user_can( 'edit_posts' );
-				}
+				},
 			)
 		);
 
