@@ -6,6 +6,7 @@ import {
 	Button,
 	DateTimePicker,
 	CheckboxControl,
+	ToggleControl,
 } from '@wordpress/components';
 import { clone } from 'lodash';
 import moment from 'moment';
@@ -23,10 +24,27 @@ import {
 
 const DATE_SETTINGS = getSettings();
 
+/**
+ * DateTimeGroup component for managing event date and time settings.
+ *
+ * @param {Object} props - Component props
+ * @param {Object} props.eventDateTime - The event date/time object
+ * @param {boolean} props.eventDateTime.all_day - Whether the event is all day
+ * @param {string} props.eventDateTime.end_date - End date timestamp as string
+ * @param {string} props.eventDateTime.hash - Unique hash for the event datetime
+ * @param {boolean} props.eventDateTime.hide_from_calendar - Whether to hide from calendar
+ * @param {boolean} props.eventDateTime.hide_from_feed - Whether to hide from feed
+ * @param {number} props.eventDateTime.id - Event datetime ID
+ * @param {string} props.eventDateTime.start_date - Start date timestamp as string
+ * @param {Function} props.removeDate - Function to remove this date
+ * @param {boolean} props.hasMultipleDates - Whether this is a multi-day event
+ * @param {string} props.currentTimezone - Current timezone
+ * @param {Object} props.dateManagerInstance - Date manager instance for updating dates
+ */
 const DateTimeGroupNew = ({
 	eventDateTime,
 	removeDate,
-	multiDay,
+	hasMultipleDates,
 	currentTimezone,
 	dateManagerInstance
 }) => {
@@ -34,12 +52,15 @@ const DateTimeGroupNew = ({
 	const [tempEventTime, setTempEventTime] = useState(null);
 	// Add local state to track the current eventDateTime
 	const [currentEventDateTime, setCurrentEventDateTime] = useState(eventDateTime);
+	// Add state to track if this date has been removed
+	const [isRemoved, setIsRemoved] = useState(false);
 
 	console.log({
 		'eventDateTime': eventDateTime,
 		'currentEventDateTime': currentEventDateTime,
 		'tempEventDate': tempEventDate,
 		'tempEventTime': tempEventTime,
+		'hasMultipleDates': hasMultipleDates,
 	});
 
 	const eventStart = getMoment(
@@ -157,7 +178,26 @@ const DateTimeGroupNew = ({
 	console.log('eventEnd', eventEnd);
 
 	return (
-		<div className="se-datetimegroup-container">
+		<div
+			className={`se-datetimegroup-container ${isRemoved ? 'se-datetimegroup-removed' : ''}`}
+			style={isRemoved ? { display: 'none' } : {}}
+		>
+			{hasMultipleDates && (
+				<div className="se-datetime-control__delete">
+					<Button
+						isDestructive
+						icon="no-alt"
+						label={__(
+							'Remove date',
+							'simple-events'
+						)}
+						onClick={() => {
+							setIsRemoved(true);
+							dateManagerInstance.removeDate(currentEventDateTime);
+						}}
+					/>
+				</div>
+			)}
 			<div className="se-datetimegroup-controls">
 				<BaseControl
 					label={__(
@@ -318,21 +358,44 @@ const DateTimeGroupNew = ({
 						}}
 					/>
 				</BaseControl>
-				{multiDay && (
-					<div className="se-datetime-control__delete">
-						<Button
-							isDestructive
-							icon="no-alt"
-							label={__(
-								'Remove date',
-								'simple-events'
-							)}
-							onClick={() =>
-								removeDate(currentEventDateTime)
+				<BaseControl>
+					<ToggleControl
+						label={__('Hide from calendar', 'simple-events')}
+						className='se-hide-from-calendar-toggle'
+						checked={currentEventDateTime.hide_from_calendar}
+						onChange={() => {
+							const newEventDateTime = clone(currentEventDateTime);
+							newEventDateTime.hide_from_calendar = !currentEventDateTime.hide_from_calendar;
+
+							// Use dateManagerInstance to save the changes if available
+							if (dateManagerInstance && dateManagerInstance.upsertDate) {
+								dateManagerInstance.upsertDate(newEventDateTime);
 							}
-						/>
-					</div>
-				)}
+
+							// Update the current eventDateTime state
+							setCurrentEventDateTime(newEventDateTime);
+						}}
+					/>
+				</BaseControl>
+				<BaseControl>
+					<ToggleControl
+						label={__('Hide from feed', 'simple-events')}
+						className='se-hide-from-feed-toggle'
+						checked={currentEventDateTime.hide_from_feed}
+						onChange={() => {
+							const newEventDateTime = clone(currentEventDateTime);
+							newEventDateTime.hide_from_feed = !currentEventDateTime.hide_from_feed;
+
+							// Use dateManagerInstance to save the changes if available
+							if (dateManagerInstance && dateManagerInstance.upsertDate) {
+								dateManagerInstance.upsertDate(newEventDateTime);
+							}
+
+							// Update the current eventDateTime state
+							setCurrentEventDateTime(newEventDateTime);
+						}}
+					/>
+				</BaseControl>
 			</div>
 		</div>
 	);

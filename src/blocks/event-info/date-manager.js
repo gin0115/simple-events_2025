@@ -104,20 +104,42 @@ export const dateManager = (initialDates = [], timezone = '') => {
 		// Mark as dirty
 		isDirty = true;
 
+		// Sort the dates by start date
+		currentDates = sortBy(currentDates, 'start_date');
+
 		console.log('currentDates', currentDates);
 		console.log('originalDates', originalDates);
 
 		return getCurrentDates();
 	}
 
-
-
-	/** */
+	/**
+	 * Remove a date from the dates.
+	 *
+	 * @param {Object} date Date object to remove
+	 * @returns {Object} Updated date management service
+	 */
+	const removeDate = (date) => {
+		console.log('removeDate', date);
+		// Find the index of the date
+		const index = currentDates.findIndex(d => d.hash === date.hash);
+		if (index !== -1) {
+			console.log('removing date', date, 'index', index);
+			// Remove the date
+			currentDates.splice(index, 1);
+			// Mark as dirty
+			isDirty = true;
+			// Sort the dates by start date
+			currentDates = sortBy(currentDates, 'start_date');
+		}
+		return getCurrentDates();
+	}
 
 	// Return the public interface
 	return {
 		getCurrentDates,
 		upsertDate,
+		removeDate,
 		// Add other methods as needed
 	};
 
