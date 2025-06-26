@@ -530,3 +530,134 @@ function se_event_update_event_query_dates( $event_id ) {
 		update_post_meta( $event_id, 'se_event_date_end', esc_attr( $end_date ) );
 	}
 }
+
+	/**
+	 * Create event date.
+	 *
+	 * @param integer                                                                                                                          $event_id    Event id.
+	 * @param array{ datetime_start: integer, datetime_end: integer, all_day: boolean, hide_from_calendar: boolean, hide_from_feed: boolean, } $event_dates Event dates.
+	 *
+	 * @return \WP_Post|null
+	 */
+function se_event_create_event_date( $event_id, $event_dates ) {
+	$default_args = array(
+		'datetime_start'     => 0,
+		'datetime_end'       => 0,
+		'all_day'            => false,
+		'hide_from_calendar' => false,
+		'hide_from_feed'     => false,
+	);
+	// Merge the default args with the provided event dates.
+	$event_dates = wp_parse_args( $event_dates, $default_args );
+	// Validate the event dates, start date should be a timestamp and end date should be a timestamp.
+	if ( ! is_numeric( $event_dates['datetime_start'] ) ) {
+		return null;
+	}
+
+	// Create the event date post.
+	$event_date_post = array(
+		'post_title'   => sprintf(
+			// translators: %s is the event title.
+			__( 'Event Date for %s', 'simple-events' ),
+			get_the_title( $event_id )
+		),
+		'post_content' => '',
+		'post_status'  => 'publish',
+		'post_type'    => SE_Event_Post_Type::$event_date_post_type,
+		'post_parent'  => $event_id,
+	);
+
+	// Insert the post into the database.
+	$event_date_id = wp_insert_post( $event_date_post );
+
+	if ( is_wp_error( $event_date_id ) || ! $event_date_id ) {
+		return null; // Failed to create the event date.
+	}
+
+	// Update the post meta for the event date.
+	update_post_meta( $event_date_id, 'se_event_date_start', esc_attr( $event_dates['datetime_start'] ) );
+	update_post_meta( $event_date_id, 'se_event_date_end', esc_attr( $event_dates['datetime_end'] ) );
+	update_post_meta( $event_date_id, 'se_event_all_day', boolval( $event_dates['all_day'] ) );
+	update_post_meta( $event_date_id, 'se_event_hide_from_calendar', boolval( $event_dates['hide_from_calendar'] ) );
+	update_post_meta( $event_date_id, 'se_event_hide_from_feed', boolval( $event_dates['hide_from_feed'] ) );
+
+	return get_post( $event_date_id );
+}
+
+/**
+ * Get the dates for an event.
+ *
+ * @param integer $event_id Event id.
+ *
+ * @return array{
+ *  datetime_start: integer,
+ *  datetime_end: integer,
+ * all_day: boolean,
+ * hide_from_calendar: boolean,
+ * hide_from_feed: boolean,
+ * }[]
+ *
+ * @throws \Exception If the event ID is invalid or if the event dates cannot be retrieved.
+ *
+ * @since 2.0.0
+ */
+function se_event_get_event_dates( $event_id ): array {
+	if ( ! is_numeric( $event_id ) || $event_id <= 0 ) {
+		throw new \Exception( __( 'Invalid event ID provided.', 'simple-events' ) );
+	}
+
+	$event_dates = get_posts(
+		array(
+			'post_type'      => SE_Event_Post_Type::$event_date_post_type,
+			'post_status'    => 'publish',
+			'posts_per_page' => -1,
+			'post_parent'    => $event_id,
+			'fields'         => 'ids',
+		)
+	);
+
+	// Map with meta.
+	$dates = array_map(
+		function ( $date_id ) {
+			$start_date         = get_post_meta( $date_id, 'se_event_date_start', true );
+			$end_date           = get_post_meta( $date_id, 'se_event_date_end', true );
+			$all_day            = get_post_meta( $date_id, 'se_event_all_day', true );
+			$hide_from_calendar = get_post_meta( $date_id, 'se_event_hide_from_calendar', true );
+			$hide_from_feed     = get_post_meta( $date_id, 'se_event_hide_from_feed', true );
+
+			return array(
+				'id'                 => $date_id,
+				'start_date'         => esc_attr( $start_date ),
+				'end_date'           => esc_attr( $end_date ),
+				'all_day'            => boolval( $all_day ),
+				'hide_from_calendar' => '' === $hide_from_calendar ? false : boolval( $hide_from_calendar ),
+				'hide_from_feed'     => '' === $hide_from_feed ? false : boolval( $hide_from_feed ),
+			);
+		},
+		$event_dates
+	);
+
+	return apply_filters( 'se_event_get_event_dates', $dates, $event_id );
+}
+
+/**
+ * Fires after WordPress has finished loading but before any headers are sent.
+ */
+// add_action(
+// 	'init',
+// 	function (): void {
+// 		$id    = 7379;
+// 		$dates = get_post_meta( $id, 'se_event_dates', true );
+// 		foreach ( $dates as $date ) {
+// 			$r = se_event_create_event_date( $id, $date );
+// 			dump(
+// 				array(
+// 					'created for id' => $id,
+// 					'date'           => $date,
+// 					'r'              => $r,
+// 				)
+// 			);
+// 		}
+// 		dd( array( $dates, 'se_event_dates', se_event_get_event_dates( $id ) ) );
+// 	}
+// );

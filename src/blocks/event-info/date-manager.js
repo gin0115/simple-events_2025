@@ -1,0 +1,124 @@
+import { sortBy, isEqual, clone } from 'lodash';
+import { getStartAndEndDate, createDefaultDate } from './dates';
+
+/**
+ * Creates a date manager service for handling event dates with change tracking
+ *
+ * @param {Array} initialDates Initial array of date objects
+ * @param {string} timezone Current timezone for the event
+ * @returns {Object} Date management service
+ */
+
+/**
+	 * Creates a hash for a date object based on its start and end times
+	 *
+	 * @param string start The start time of the date
+	 * @param string end The end time of the date
+	 * @returns {string} A unique hash for the date
+	 */
+	const createDateHash = (start, end) => {
+		// Get the current timestamp.
+		const timestamp = Date.now();
+		// Create a hash using the start and end times along with the timestamp.
+		const hash = `${start}-${end}-${timestamp}`;
+		return hash;
+	}
+
+export const dateManager = (initialDates = [], timezone = '') => {
+
+	// lOOP through dates and add a hash to each date
+	initialDates.dates.forEach(date => {
+		date.hash = createDateHash(date.start_date, date.end_date);
+	});
+
+
+	// Internal state
+	let originalDates = clone(initialDates.dates || []);
+	let currentDates = clone(initialDates.dates || []);
+	let isDirty = false;
+
+	console.log({
+		'originalDates': originalDates,
+		'currentDates': currentDates,
+		'isDirty': isDirty,
+	});
+
+
+	/**
+	 * Get the current dates
+	 *
+	 * @return {Object}
+	 *
+	 */
+	const getCurrentDates = () => {
+		return {
+			dates: currentDates,
+			isDirty: isDirty,
+		};
+	}
+
+	/**
+	 * Find a date by its hash
+	 *
+	 * @param {string} hash The hash of the date to find
+	 * @returns {Object} The date object
+	 */
+	const findDateByHash = (hash) => {
+		return currentDates.find(d => d.hash === hash);
+	}
+
+	/**
+	 * Upsert a date to the dates.
+	 *
+	 * Date
+	 * {
+	 * 	id: null|int,
+	 *  hash: string,
+	 *  start: string,
+	 * 	end: string,
+	 * 	allDay: boolean,
+	 * 	showOnFeed: boolean,
+	 * 	showOnCalendar: boolean
+	 * }
+	 *
+	 * @param {Object} date Date object to add
+	 * @returns {Object} Updated date management service
+	 */
+	const upsertDate = (date) => {
+		// If the date doesnt contain a hash, generate one
+		if (!date.hash) {
+			date.hash = createDateHash(date.start, date.end);
+		}
+
+		// Check if the hash exists in the current dates
+		const existingIndex = currentDates.findIndex(d => d.hash === date.hash);
+		if (existingIndex !== -1) {
+			// If it exists, update the date
+			currentDates[existingIndex] = date;
+			console.log('updated date', date);
+		} else {
+			// If it doesn't exist, add the new date
+			currentDates.push(date);
+			console.log('new date', date);
+		}
+		// Mark as dirty
+		isDirty = true;
+
+		console.log('currentDates', currentDates);
+		console.log('originalDates', originalDates);
+
+		return getCurrentDates();
+	}
+
+
+
+	/** */
+
+	// Return the public interface
+	return {
+		getCurrentDates,
+		upsertDate,
+		// Add other methods as needed
+	};
+
+};

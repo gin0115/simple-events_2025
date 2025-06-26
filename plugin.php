@@ -53,19 +53,19 @@ if ( ! is_file( SE_PLUGIN_DIR . '/vendor/autoload.php' ) ) {
 require_once SE_PLUGIN_DIR . '/vendor/autoload.php';
 
 // Initialize the plugin if system requirements check out.
-$se_requirements = validate_plugin_requirements( SE_BASENAME );
-define( 'SE_REQUIREMENTS', $se_requirements );
+// $se_requirements = validate_plugin_requirements( SE_BASENAME );
+// define( 'SE_REQUIREMENTS', $se_requirements );
 
-if ( $se_requirements instanceof WP_Error ) {
-	add_action(
-		'admin_notices',
-		static function () use ( $se_requirements ) {
-			$html_message = wp_sprintf( '<div class="error notice se">%s</div>', $se_requirements->get_error_message() );
-			echo wp_kses_post( $html_message );
-		}
-	);
-	return;
-}
+// if ( $se_requirements instanceof WP_Error ) {
+// 	add_action(
+// 		'admin_notices',
+// 		static function () use ( $se_requirements ) {
+// 			$html_message = wp_sprintf( '<div class="error notice se">%s</div>', $se_requirements->get_error_message() );
+// 			echo wp_kses_post( $html_message );
+// 		}
+// 	);
+// 	return;
+// }
 
 require_once SE_SRC_PATH . '/classes/class-se-event-post-type.php';
 require_once SE_SRC_PATH . '/classes/class-se-blocks.php';
@@ -76,6 +76,7 @@ require_once SE_SRC_PATH . '/classes/class-se-admin.php';
 require_once SE_SRC_PATH . '/classes/class-se-calendar-export.php';
 require_once SE_SRC_PATH . '/classes/class-se-calendar.php';
 require_once SE_SRC_PATH . '/classes/class-se-event-query-dates.php';
+require_once SE_SRC_PATH . '/classes/class-se-event-dates.php';
 
 require_once SE_SRC_PATH . '/calendar-functions.php';
 require_once SE_SRC_PATH . '/event-functions.php';

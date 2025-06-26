@@ -11,7 +11,7 @@ import moment from 'moment';
 import { clone, isEqual, sortBy, head, last, pull } from 'lodash';
 import { __ } from '@wordpress/i18n';
 import { registerBlockType } from '@wordpress/blocks';
-import { Fragment } from '@wordpress/element';
+import { Fragment, useState, useEffect } from '@wordpress/element';
 import {
 	PanelRow,
 	Placeholder,
@@ -55,10 +55,83 @@ import {
 	is12HourTime,
 } from './dates';
 
+import apiFetch from '@wordpress/api-fetch';
+
+import { dateManager } from './date-manager';
 // Import meta utilities
 import { metaManager } from './meta-utils';
 
+// Import the new DateTimeGroup component as DateTimeGroupNew
+import DateTimeGroupNew from './components/DateTimeGroup';
+
 const DATE_SETTINGS = getSettings(); // Still needed for timeFormat
+
+/**
+ * Get the event dates from the custom rest API endpoint.
+ *
+ * @returns {Promise<Array>} A promise that resolves to an array of event dates.
+ */
+export const getEventDatePosts = () => {
+	// Get the current post id.
+	const postId = window?.wp?.data?.select('core/editor')?.getCurrentPostId();
+	if (!postId) {
+		// Return an empty array if no post id is found.
+		return Promise.resolve([]);
+	}
+
+	// simple-events/event-dates/{event}
+	return apiFetch({ path: '/simple-events/event-dates/' + postId }).then((posts) => posts
+	).catch((error) => {
+		console.error('Error fetching event dates:', error);
+		return [];
+	});
+
+};
+
+/**
+ * Initializes the block by fetching the event dates and setting them in the state.
+ *
+ * @returns {Promise<void>} A promise that resolves when the event dates are fetched and set.
+ */
+export const initEventDates = async () => {
+	const eventDates = await getEventDatePosts();
+	if (eventDates && eventDates.length > 0) {
+		// Set the event dates in the state.
+		window.wp.data.dispatch('core/editor').editPost({
+			meta: {
+				se_event_dates: eventDates,
+			},
+		});
+	}
+}
+
+// Initialize date manager instance outside the component
+let dateManagerInstance = null;
+let gettingDates = false;
+
+/**
+ * Initialize the date manager with resolved event date posts
+ */
+const initializeDateManager = async () => {
+	if (gettingDates || dateManagerInstance) {
+		return dateManagerInstance;
+	}
+
+	gettingDates = true;
+	try {
+		const eventDatePosts = await getEventDatePosts();
+		console.log('eventDatePosts from getEventDatePosts:', eventDatePosts);
+		console.log('dateManager function:', dateManager);
+		dateManagerInstance = dateManager(eventDatePosts);
+		console.log('dateManagerInstance after creation:', dateManagerInstance);
+		return dateManagerInstance;
+	} catch (error) {
+		console.error('Error initializing date manager:', error);
+		return null;
+	} finally {
+		gettingDates = false;
+	}
+};
 
 /**
  * Register: a Gutenberg Block.
@@ -94,6 +167,31 @@ registerBlockType('simple-events/event-info', {
 			'se-event',
 			'meta'
 		);
+
+		// Add state for loading indication
+		const [isGettingDates, setIsGettingDates] = useState(false);
+		const [dateManagerReady, setDateManagerReady] = useState(false);
+		const [dateManagerState, setDateManagerState] = useState(null);
+
+		// Initialize date manager on component mount
+		useEffect(() => {
+			const initManager = async () => {
+				setIsGettingDates(true);
+				try {
+					const manager = await initializeDateManager();
+					setDateManagerReady(true);
+					setDateManagerState(manager);
+				} catch (error) {
+					console.error('Failed to initialize date manager:', error);
+				} finally {
+					setIsGettingDates(false);
+				}
+			};
+
+			if (!dateManagerReady && !isGettingDates) {
+				initManager();
+			}
+		}, [dateManagerReady, isGettingDates]);
 
 		// Create meta manager instance
 		const manager = metaManager(meta, setMeta);
@@ -460,6 +558,7 @@ registerBlockType('simple-events/event-info', {
 			}
 		);
 
+
 		const EventDateTime = ({ dates }) => {
 			const addNewDate = () => {
 				const existingDates =
@@ -546,6 +645,58 @@ registerBlockType('simple-events/event-info', {
 			);
 		};
 
+		const EventDateTimeNew = ({ dates }) => {
+			console.log('dates ', dates);
+
+			const datesOutput = [];
+
+			sortBy(dates, 'datetime_start').forEach((date, index) => {
+				datesOutput.push(
+					<DateTimeGroupNew
+						key={index}
+						eventDateTime={date}
+						removeDate={null}
+						hasMultipleDates={dates.length > 1}
+						dateManagerInstance={dateManagerState}
+					/>
+				);
+			});
+
+			return (
+				<Fragment>
+					<span className="se-datetimegroup-controls-label">
+						{__('Event Dates (New)', 'simple-events')}
+					</span>
+					{datesOutput}
+
+					{/* Keep JSON for debugging */}
+					<div className="se-event-dates-json">
+						<h4>Debug JSON:</h4>
+						{dates && dates.length > 0 ? (
+							dates.map((date, index) => (
+								<div key={index} className="se-event-date-row">
+									<pre style={{
+										background: '#f0f0f0',
+										padding: '10px',
+										margin: '5px 0',
+										borderRadius: '4px',
+										fontSize: '12px',
+										overflow: 'auto'
+									}}>
+										{JSON.stringify(date, null, 2)}
+									</pre>
+								</div>
+							))
+						) : (
+							<div className="se-no-dates">
+								{__('No dates available', 'simple-events')}
+							</div>
+						)}
+					</div>
+				</Fragment>
+			);
+		};
+
 		const renderPreview = () => (
 			<div {...useBlockProps()}>
 				{getBlockControls()}
@@ -587,7 +738,9 @@ registerBlockType('simple-events/event-info', {
 					isColumnLayout
 					className={props.className}
 				>
+					{console.log('dateManagerInstance', dateManagerState?.getCurrentDates())}
 					<EventDateTime dates={meta?.se_event_dates} />
+					<EventDateTimeNew dates={dateManagerState?.getCurrentDates()?.dates} />
 					<TextControl
 						className="se-location-label"
 						label={__('Venue', 'simple-events')}
