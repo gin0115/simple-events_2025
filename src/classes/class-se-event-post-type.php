@@ -12,12 +12,29 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Post types Class.
  */
 class SE_Event_Post_Type {
+
+	/**
+	 * The current event version.
+	 *
+	 * @var string
+	 */
+	public static $current_event_version = '2.0.0';
+
+
 	/**
 	 * This is the name of this post type.
 	 *
 	 * @var string
 	 */
 	public static $post_type = 'se-event';
+
+
+	/**
+	 * The event date post type.
+	 *
+	 * @var string
+	 */
+	public static $event_date_post_type = 'se-event-date';
 
 	/**
 	 * This is the slug of this post type.
@@ -120,6 +137,64 @@ class SE_Event_Post_Type {
 				'template_lock'         => 'insert',
 				'taxonomies'            => array(
 					'post_tag',
+				),
+			)
+		);
+
+		// Register the event-date post type. This is a child of the above event post type.
+		register_post_type(
+			'se-event-date',
+			array(
+				'labels'                => array(
+					'name'                  => __( 'Event Dates', 'simple-events' ),
+					'singular_name'         => __( 'Event Date', 'simple-events' ),
+					'all_items'             => __( 'All Event Dates', 'simple-events' ),
+					'archives'              => __( 'Event Date Archives', 'simple-events' ),
+					'attributes'            => __( 'Event Date Attributes', 'simple-events' ),
+					'insert_into_item'      => __( 'Insert into Event Date', 'simple-events' ),
+					'uploaded_to_this_item' => __( 'Uploaded to this Event Date', 'simple-events' ),
+					'featured_image'        => _x( 'Featured Image', 'se-event-date', 'simple-events' ),
+					'set_featured_image'    => _x( 'Set featured image', 'se-event-date', 'simple-events' ),
+					'remove_featured_image' => _x( 'Remove featured image', 'se-event-date', 'simple-events' ),
+					'use_featured_image'    => _x( 'Use as featured image', 'se-event-date', 'simple-events' ),
+					'filter_items_list'     => __( 'Filter Event Dates list', 'simple-events' ),
+					'items_list_navigation' => __( 'Event Dates list navigation', 'simple-events' ),
+					'items_list'            => __( 'Event Dates list', 'simple-events' ),
+					'new_item'              => __( 'New Event Date', 'simple-events' ),
+					'add_new'               => __( 'Add New', 'simple-events' ),
+					'add_new_item'          => __( 'Add New Event Date', 'simple-events' ),
+					'edit_item'             => __( 'Edit Event Date', 'simple-events' ),
+					'view_item'             => __( 'View Event Date', 'simple-events' ),
+					'view_items'            => __( 'View Event Dates', 'simple-events' ),
+					'search_items'          => __( 'Search Event Dates', 'simple-events' ),
+					'not_found'             => __( 'No Event Dates found', 'simple-events' ),
+					'not_found_in_trash'    => __( 'No Event Dates found in trash', 'simple-events' ),
+					'parent_item_colon'     => __( 'Parent Event Date:', 'simple-events' ),
+					'menu_name'             => __( 'Event Dates', 'simple-events' ),
+				),
+				'public'                => false,
+				'hierarchical'          => false,
+				'show_ui'               => false,
+				'show_in_nav_menus'     => false,
+				'supports'              => array(
+					'title',
+					'editor',
+					'thumbnail',
+					'custom-fields',
+				),
+				'rewrite'               => array(
+					'slug'       => 'event-date',
+					'with_front' => false,
+				),
+				'has_archive'           => false,
+				'query_var'             => false,
+				'menu_position'         => null,
+				'menu_icon'             => 'dashicons-calendar-alt',
+				'show_in_rest'          => true,
+				'rest_base'             => 'se-event-date',
+				'rest_controller_class' => 'WP_REST_Posts_Controller',
+				'capabilities'          => array(
+					'create_posts' => 'do_not_allow', // Disable creation of new event dates.
 				),
 			)
 		);
@@ -392,6 +467,86 @@ class SE_Event_Post_Type {
 				'type'           => 'boolean',
 				'object_subtype' => self::$post_type,
 				'default'        => true,
+			)
+		);
+
+		// Register meta to denote the event version.
+		register_meta(
+			'post',
+			'se_event_version',
+			array(
+				'show_in_rest'   => true,
+				'single'         => true,
+				'type'           => 'string',
+				'object_subtype' => self::$post_type,
+				'default'        => '1.0.0',
+				'description'    => __(
+					'The version of the event post.',
+					'simple-events'
+				),
+			)
+		);
+
+		// Register event date meta.
+		// start time (timestamp)
+		register_meta(
+			'post',
+			'se_event_date_start_timestamp',
+			array(
+				'show_in_rest'   => true,
+				'single'         => true,
+				'type'           => 'integer',
+				'object_subtype' => self::$event_date_post_type,
+			)
+		);
+
+		// end time (timestamp)
+		register_meta(
+			'post',
+			'se_event_date_end_timestamp',
+			array(
+				'show_in_rest'   => true,
+				'single'         => true,
+				'type'           => 'integer',
+				'object_subtype' => self::$event_date_post_type,
+			)
+		);
+
+		// is all day (bool)
+		register_meta(
+			'post',
+			'se_event_date_all_day',
+			array(
+				'show_in_rest'   => true,
+				'single'         => true,
+				'type'           => 'boolean',
+				'object_subtype' => self::$event_date_post_type,
+			)
+		);
+
+		// hide from calendar (bool)
+		register_meta(
+			'post',
+			'se_event_date_hide_from_calendar',
+			array(
+				'show_in_rest'   => true,
+				'single'         => true,
+				'type'           => 'boolean',
+				'object_subtype' => self::$event_date_post_type,
+				'default'        => false,
+			)
+		);
+
+		// hide from feed (bool)
+		register_meta(
+			'post',
+			'se_event_date_hide_from_feed',
+			array(
+				'show_in_rest'   => true,
+				'single'         => true,
+				'type'           => 'boolean',
+				'object_subtype' => self::$event_date_post_type,
+				'default'        => false,
 			)
 		);
 	}
