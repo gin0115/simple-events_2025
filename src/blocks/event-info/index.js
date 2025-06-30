@@ -743,7 +743,7 @@ registerBlockType('simple-events/event-info', {
 							onChange={(value) =>
 								setMeta({
 									...meta,
-									c: value,
+									se_event_display_grouped: value,
 								})
 							}
 						/>

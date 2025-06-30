@@ -408,6 +408,11 @@ class SE_Date_Display_Formatter {
 			}
 		);
 
+		// Sort by the start date.
+		usort( $event_dates, function ( $a, $b ) {
+			return $a['start_date'] - $b['start_date'];
+		} );
+
 		// Get the date count.
 		$dates_count = count( $event_dates );
 
