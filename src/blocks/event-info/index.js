@@ -185,22 +185,6 @@ export const saveEventDatesOnPostSave = async (dates, dateManagerInstance = null
 	}
 };
 
-/**
- * Initializes the block by fetching the event dates and setting them in the state.
- *
- * @returns {Promise<void>} A promise that resolves when the event dates are fetched and set.
- */
-export const initEventDates = async () => {
-	const eventDates = await getEventDatePosts();
-	if (eventDates && eventDates.length > 0) {
-		// Set the event dates in the state.
-		window.wp.data.dispatch('core/editor').editPost({
-			meta: {
-				se_event_dates: eventDates,
-			},
-		});
-	}
-}
 
 // Initialize date manager instance outside the component
 let dateManagerInstance = null;
