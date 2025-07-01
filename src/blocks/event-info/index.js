@@ -42,11 +42,11 @@ import {
 	TIMEZONE_NAME,
 	TIMEZONES,
 
-} from './dates';
+} from './date-utils';
 
 import apiFetch from '@wordpress/api-fetch';
 
-import { dateManager } from './date-manager';
+import { dateManager } from './event-manager';
 
 // Import the new DateTimeGroup component as DateTimeGroupNew
 import DateTimeGroupNew from './components/DateTimeGroup';
