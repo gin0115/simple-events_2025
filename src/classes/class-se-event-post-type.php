@@ -257,24 +257,13 @@ class SE_Event_Post_Type {
 			array(
 				'single'       => true,
 				'type'         => 'array',
-				'show_in_rest' => array(
-					'schema' => array(
-						'items' => array(
-							'type'       => 'object',
-							'properties' => array(
-								'datetime_start' => array(
-									'type' => 'string',
-								),
-								'datetime_end'   => array(
-									'type' => 'string',
-								),
-								'all_day'        => array(
-									'type' => 'boolean',
-								),
-							),
-						),
-					),
-				),
+				'default'      => array(),
+				'sanitize_callback' => function ( $value ) {
+					if ( is_null( $value ) || ! is_array( $value ) ) {
+						return array();
+					}
+					return $value;
+				},
 			)
 		);
 

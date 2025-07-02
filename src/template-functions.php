@@ -411,6 +411,11 @@ function se_event_get_next_event( int $event_id, ?int $event_date_id = null ): ?
 				'compare' => '>',
 				'type'    => 'NUMERIC',
 			),
+			array(
+				'key'     => 'se_event_hide_from_feed',
+				'value'   => 1,
+				'compare' => '!=',
+			),
 		),
 	);
 	// If we dont allow grouping, add the event id to parent not in.
@@ -467,6 +472,11 @@ function se_event_get_previous_event( int $event_id, ?int $event_date_id = null 
 				'value'   => get_post_meta( $event_date_id, 'se_event_date_start', true ),
 				'compare' => '<',
 				'type'    => 'NUMERIC',
+			),
+			array(
+				'key'     => 'se_event_hide_from_feed',
+				'value'   => 1,
+				'compare' => '!=',
 			),
 		),
 	);

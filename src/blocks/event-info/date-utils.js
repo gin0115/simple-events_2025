@@ -4,6 +4,17 @@ import { __ } from '@wordpress/i18n';
 import { head, last } from 'lodash';
 
 /**
+ * Date and Time Utilities
+ *
+ * Utility functions for handling date/time operations, timezone conversions,
+ * and date formatting within the Simple Events plugin. Provides consistent
+ * date handling across the event management system.
+ *
+ * @package SimpleEvents
+ * @since   1.0.0
+ */
+
+/**
  * Date/Time Constants
  */
 export const DEFAULT_START_HOUR = 9;
@@ -30,12 +41,17 @@ TIMEZONES.unshift({
 });
 
 /**
- * Get the DST offset for a given timestamp and timezone
+ * Gets the DST offset for a given timestamp and timezone.
  *
- * @param {number} timestamp The timestamp to check
- * @param {string|null} timezone The timezone to check (defaults to current timezone)
- * @param {string} currentTimezone The current event timezone
- * @returns {number} The offset in minutes
+ * Calculates the daylight saving time offset for a specific timestamp
+ * within a given timezone. Handles timezone conversions and DST transitions.
+ *
+ * @since 1.0.0
+ *
+ * @param {number}      timestamp       The timestamp to check.
+ * @param {string|null} timezone        The timezone to check (defaults to current timezone).
+ * @param {string}      currentTimezone The current event timezone.
+ * @return {number} The offset in minutes.
  */
 export const getDstOffset = (timestamp, timezone = null, currentTimezone = TIMEZONE) => {
 	// Return no offset if the event timezone is the same as the site.
@@ -59,11 +75,16 @@ export const getDstOffset = (timestamp, timezone = null, currentTimezone = TIMEZ
 };
 
 /**
- * Creates a moment in the site timezone from the provided unix timestamp.
+ * Creates a moment object in the site timezone from a unix timestamp.
  *
- * @param {string} timestamp Timestamp to convert to a moment.
- * @param {boolean} formatted Whether to return a human-readable formatted string.
- * @param {string} currentTimezone The current timezone for the event
+ * Converts a unix timestamp to a moment object using the appropriate
+ * timezone offset. Can optionally return a formatted string instead.
+ *
+ * @since 1.0.0
+ *
+ * @param {string}  timestamp       Timestamp to convert to a moment.
+ * @param {boolean} formatted       Whether to return a human-readable formatted string.
+ * @param {string}  currentTimezone The current timezone for the event.
  * @return {moment.Moment|string} Human readable formatted string if `formatted` is true, moment object otherwise.
  */
 export const getMoment = (timestamp, formatted = false, currentTimezone = TIMEZONE) => {
@@ -79,10 +100,15 @@ export const getMoment = (timestamp, formatted = false, currentTimezone = TIMEZO
 };
 
 /**
- * Creates a timestamp from the provided date string.
+ * Creates a timestamp from a date string.
  *
- * @param {string} dateTime Date string to convert to a timestamp.
- * @param {string} currentTimezone The current timezone for the event
+ * Converts a date string to a unix timestamp, applying the appropriate
+ * timezone offset for accurate time representation.
+ *
+ * @since 1.0.0
+ *
+ * @param {string} dateTime         Date string to convert to a timestamp.
+ * @param {string} currentTimezone  The current timezone for the event.
  * @return {string} The timestamp, cast as a string.
  */
 export const getTimestamp = (dateTime, currentTimezone = TIMEZONE) => {
@@ -98,25 +124,39 @@ export const getTimestamp = (dateTime, currentTimezone = TIMEZONE) => {
 };
 
 /**
- * Get the start and end date from a collection of dates.
- * Will remove any event that has passed.
+ * Gets the start and end date from a collection of dates.
  *
- * @param {{all_day: boolean, datetime_start: string, datetime_end: string}[]} dates The dates to check.
- * @returns {{ datetime_start: string|null, datetime_end: string|null }}
+ * Analyzes a collection of event dates to determine the overall start and end
+ * times, filtering out dates that have already passed. Returns the earliest
+ * start date and latest end date from valid future dates.
+ *
+ * @since 1.0.0
+ *
+ * @param {Array} dates Array of date objects with all_day, start_date, and end_date properties.
+ * @return {Object} Object with start_date and end_date properties (strings or null).
  */
 export const getStartAndEndDate = (dates) => {
 	// iterate over and remove any that has passed.
 	const now = moment().utcOffset(OFFSET);
 	const filteredDates = dates.filter((date) => {
-		const endDate = moment.unix(date.datetime_end).utcOffset(OFFSET);
+		const endDate = moment.unix(date.end_date).utcOffset(OFFSET);
 		return endDate.isAfter(now);
 	});
 
-	// Closure that gets the first and last date.
+	/**
+	 * Gets the first and last date from the collection.
+	 *
+	 * Helper closure that extracts the earliest start date and
+	 * latest end date from the full date collection.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return {Object} Object with start_date and end_date properties.
+	 */
 	const getFirstAndLastDate = () => {
 		return {
-			datetime_start: moment.unix(head(dates).datetime_start).utcOffset(OFFSET).unix().toString(),
-			datetime_end: moment.unix(last(dates).datetime_end).utcOffset(OFFSET).unix().toString(),
+			start_date: moment.unix(head(dates).start_date).utcOffset(OFFSET).unix().toString(),
+			end_date: moment.unix(last(dates).end_date).utcOffset(OFFSET).unix().toString(),
 		};
 	};
 
@@ -131,8 +171,8 @@ export const getStartAndEndDate = (dates) => {
 
 	// Loop over the dates and set the start date as the earliest and the end as the latest.
 	filteredDates.forEach((date) => {
-		const startDateMoment = moment.unix(date.datetime_start).utcOffset(OFFSET);
-		const endDateMoment = moment.unix(date.datetime_end).utcOffset(OFFSET);
+		const startDateMoment = moment.unix(date.start_date).utcOffset(OFFSET);
+		const endDateMoment = moment.unix(date.end_date).utcOffset(OFFSET);
 
 		// If the end date has passed, skip it.
 		if (endDateMoment.isBefore(now)) {
@@ -140,9 +180,15 @@ export const getStartAndEndDate = (dates) => {
 		}
 
 		/**
-		 * Closure for setting the start or end date.
-		 * @param {moment.Moment} startDateMoment
-		 * @param {moment.Moment} endDateMoment
+		 * Sets the start or end date based on comparison logic.
+		 *
+		 * Helper closure for determining and setting the earliest start date
+		 * and latest end date from the filtered date collection.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param {moment.Moment} startDateMoment The start date moment to evaluate.
+		 * @param {moment.Moment} endDateMoment   The end date moment to evaluate.
 		 */
 		const setDate = (startDateMoment, endDateMoment) => {
 			// If the start date is before the current start date, set it.
@@ -166,23 +212,29 @@ export const getStartAndEndDate = (dates) => {
 
 	// If we have no startDate or endDate, just get the first from dates.
 	if (!startDate) {
-		startDate = moment.unix(head(filteredDates).datetime_start).utcOffset(OFFSET);
+		startDate = moment.unix(head(filteredDates).start_date).utcOffset(OFFSET);
 	}
 	if (!endDate) {
-		endDate = moment.unix(last(filteredDates).datetime_end).utcOffset(OFFSET);
+		endDate = moment.unix(last(filteredDates).end_date).utcOffset(OFFSET);
 	}
 	return {
-		datetime_start: startDate.unix().toString(),
-		datetime_end: endDate.unix().toString(),
+		start_date: startDate.unix().toString(),
+		end_date: endDate.unix().toString(),
 	};
 };
 
 /**
- * Creates a default date object for new events
+ * Creates a default date object for new events.
  *
- * @param {Array} existingDates Array of existing dates
- * @param {string} currentTimezone The current timezone
- * @returns {Object} New date object
+ * Generates a new event date object with sensible defaults based on
+ * existing dates and timezone. Sets the new date to be one day after
+ * the last existing date, or uses current time with default hours.
+ *
+ * @since 2.0.0
+ *
+ * @param {Array}  existingDates   Array of existing date objects.
+ * @param {string} currentTimezone The current timezone identifier.
+ * @return {Object} New date object with start_date, end_date, and flag properties.
  */
 export const createDefaultDate = (existingDates = [], currentTimezone = TIMEZONE) => {
 	// Set default date and time.
@@ -204,9 +256,6 @@ export const createDefaultDate = (existingDates = [], currentTimezone = TIMEZONE
 	eventStart.add(1, 'days');
 	eventEnd.add(1, 'days');
 
-	console.log('eventStart', eventStart);
-	console.log('eventEnd', eventEnd);
-
 	return {
 		start_date: wp.date.date('U', eventStart),
 		end_date: wp.date.date('U', eventEnd),
@@ -217,11 +266,17 @@ export const createDefaultDate = (existingDates = [], currentTimezone = TIMEZONE
 };
 
 /**
- * Combines a given date and time into a moment object.
+ * Combines a date and time into a moment object.
  *
- * @param {string} date The date to combine.
- * @param {string} time The time to combine.
- * @return {moment.Moment} The combined date and time.
+ * Takes separate date and time strings and combines them into a single
+ * moment object, preserving the date from the first parameter and the
+ * time from the second parameter.
+ *
+ * @since 1.0.0
+ *
+ * @param {string} date The date string to use.
+ * @param {string} time The time string to use.
+ * @return {moment.Moment} The combined date and time as a moment object.
  */
 export const combineDateAndTime = (date, time) => {
 	const timeMoment = moment(time);
@@ -235,9 +290,14 @@ export const combineDateAndTime = (date, time) => {
 };
 
 /**
- * Check if the current time format is 12-hour
+ * Checks if the current time format is 12-hour.
  *
- * @returns {boolean} True if 12-hour format
+ * Analyzes the WordPress date format settings to determine if the
+ * site is configured to use 12-hour time format (with AM/PM indicators).
+ *
+ * @since 2.0.0
+ *
+ * @return {boolean} True if 12-hour format is used, false otherwise.
  */
 export const is12HourTime = () => {
 	const timeFormat = DATE_SETTINGS.formats.datetime;
