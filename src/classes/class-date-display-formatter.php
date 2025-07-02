@@ -504,7 +504,8 @@ class SE_Date_Display_Formatter {
 		// iterate over the dates and group them by the start and end times.
 		foreach ( $event_dates as $date ) {
 			// If this event is all day.
-			if ( $date['all_day'] ) {
+			if ( true === (bool) $date['all_day'] ) {
+				// adump($date['all_day']);
 				$groups['all_day'][] = $date;
 				continue;
 			}
@@ -515,6 +516,7 @@ class SE_Date_Display_Formatter {
 			// Add the date to the group.
 			$groups[ $start . ' - ' . $end ][] = $date;
 		}
+		// adump($groups);
 
 		// Iterate over each group, and break them down to the starting month.
 		foreach ( $groups as $group ) {
@@ -548,7 +550,7 @@ class SE_Date_Display_Formatter {
 			}
 
 			foreach ( $dates as $month_dates ) {
-					$dates_string = $this->join_string( array_column( $month_dates, 'display_date' ), ', ', ' and ' );
+				$dates_string = $this->join_string( array_column( $month_dates, 'display_date' ), ', ', ' and ' );
 
 				// Lets start compiling the output.
 				$output = '';

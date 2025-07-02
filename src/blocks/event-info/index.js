@@ -1,8 +1,13 @@
 /* global lodash, ajaxurl */
 /**
- * BLOCK: Events Info
+ * Event Info Block
  *
- * Event date and location management.
+ * Gutenberg block for managing event date, time, location, and venue information.
+ * Provides an interface for adding multiple event dates with timezone support,
+ * venue and location details, external links, and calendar integration options.
+ *
+ * @package SimpleEvents
+ * @since   1.0.0
  */
 
 import './editor.scss';
@@ -54,9 +59,14 @@ import DateTimeGroupNew from './components/DateTimeGroup';
 const DATE_SETTINGS = getSettings(); // Still needed for timeFormat
 
 /**
- * Get the event dates from the custom rest API endpoint.
+ * Fetches event dates from the custom REST API endpoint.
  *
- * @returns {Promise<Array>} A promise that resolves to an array of event dates.
+ * Retrieves all event dates associated with the current post via the
+ * Simple Events REST API. Returns an empty array if no post ID is found.
+ *
+ * @since 2.0.0
+ *
+ * @return {Promise<Array>} Promise that resolves to an array of event date objects.
  */
 export const getEventDatePosts = () => {
 	// Get the current post id.
@@ -76,11 +86,17 @@ export const getEventDatePosts = () => {
 };
 
 /**
- * Save the event dates to the custom rest API endpoint.
+ * Saves event dates to the custom REST API endpoint.
  *
- * @param {Array} dates - The array of event dates to save.
- * @param {Object} dateManagerInstance - The date manager instance to refresh.
- * @returns {Promise<Array>} A promise that resolves to the saved event dates.
+ * Sends event dates to the server for persistence via the Simple Events
+ * REST API sync endpoint. Displays success/error notifications and optionally
+ * refreshes the date manager instance with updated data.
+ *
+ * @since 2.0.0
+ *
+ * @param {Array}       dates               Array of event date objects to save.
+ * @param {Object|null} dateManagerInstance Optional date manager instance to refresh after save.
+ * @return {Promise<Object>} Promise that resolves to the API response object.
  */
 export const saveEventDates = (dates, dateManagerInstance = null) => {
 	// Get the current post id.
@@ -99,8 +115,6 @@ export const saveEventDates = (dates, dateManagerInstance = null) => {
 			nonce: seSettings.syncDatesNonce
 		}
 	}).then((response) => {
-		console.log('Event dates saved successfully:', response);
-
 		// Show notification message if available
 		if (response.message) {
 			// Show success notification in bottom left
@@ -138,26 +152,21 @@ export const saveEventDates = (dates, dateManagerInstance = null) => {
 };
 
 /**
- * Auto-save event dates when they change.
+ * Auto-saves event dates when they change.
  *
- * @param {Array} dates - The array of event dates to auto-save.
- * @param {Object} dateManagerInstance - The date manager instance to refresh.
- * @returns {Promise<Array>} A promise that resolves to the saved event dates.
+ * Wrapper function for saveEventDates that handles automatic saving
+ * of event dates during user interactions.
+ *
+ * @since 2.0.0
+ *
+ * @param {Array}       dates               Array of event date objects to auto-save.
+ * @param {Object|null} dateManagerInstance Optional date manager instance to refresh.
+ * @return {Promise<Object>} Promise that resolves to the saved event dates response.
  */
 export const autoSaveEventDates = async (dates, dateManagerInstance = null) => {
 	try {
 		// Save to REST API
 		const savedDates = await saveEventDates(dates, dateManagerInstance);
-
-		// Also update the post meta to keep it in sync
-		const postId = window?.wp?.data?.select('core/editor')?.getCurrentPostId();
-		if (postId) {
-			window.wp.data.dispatch('core/editor').editPost({
-				meta: {
-					se_event_dates: savedDates.dates || savedDates,
-				},
-			});
-		}
 
 		return savedDates;
 	} catch (error) {
@@ -167,29 +176,28 @@ export const autoSaveEventDates = async (dates, dateManagerInstance = null) => {
 };
 
 /**
- * Save event dates when the post is being saved.
+ * Saves event dates when the post is being saved.
  *
- * @param {Array} dates - The array of event dates to save.
- * @param {Object} dateManagerInstance - The date manager instance to refresh.
- * @returns {Promise<Array>} A promise that resolves to the saved event dates.
+ * Handles saving event dates during WordPress post save operations.
+ * Also updates block attributes to ensure the saved dates with IDs
+ * are properly persisted in the block editor.
+ *
+ * @since 2.0.0
+ *
+ * @param {Array}       dates               Array of event date objects to save.
+ * @param {Object|null} dateManagerInstance Optional date manager instance to refresh.
+ * @return {Promise<Object>} Promise that resolves to the saved event dates response.
  */
 export const saveEventDatesOnPostSave = async (dates, dateManagerInstance = null) => {
 	try {
 		// Save to REST API
 		const savedDates = await saveEventDates(dates, dateManagerInstance);
-		console.log('Event dates saved on post save:', savedDates);
 
 		// Update the post meta to ensure the updated dates (with IDs) are persisted
 		const postId = window?.wp?.data?.select('core/editor')?.getCurrentPostId();
 		if (postId && savedDates) {
-			window.wp.data.dispatch('core/editor').editPost({
-				meta: {
-					se_event_dates: [],
-				},
-			});
-			console.log('Post meta updated with saved dates:', savedDates.dates || savedDates);
 
-			// Also update the block attributes to ensure the updated dates (with IDs) are persisted
+			// Update the block attributes to ensure the updated dates (with IDs) are persisted
 			const blocks = window.wp.data.select('core/block-editor').getBlocks();
 			const eventInfoBlock = blocks.find(block => block.name === 'simple-events/event-info');
 
@@ -200,7 +208,6 @@ export const saveEventDatesOnPostSave = async (dates, dateManagerInstance = null
 						eventDates: savedDates.dates || savedDates,
 					}
 				);
-				console.log('Block attributes updated with saved dates:', savedDates.dates || savedDates);
 			}
 		}
 
@@ -217,7 +224,15 @@ let dateManagerInstance = null;
 let gettingDates = false;
 
 /**
- * Initialize the date manager with resolved event date posts
+ * Initializes the date manager with resolved event date posts.
+ *
+ * Creates and configures a date manager instance with event dates fetched
+ * from the REST API. Handles post meta synchronization and timezone settings.
+ * Uses singleton pattern to avoid multiple initializations.
+ *
+ * @since 2.0.0
+ *
+ * @return {Promise<Object|null>} Promise that resolves to the date manager instance or null on error.
  */
 const initializeDateManager = async () => {
 	if (gettingDates || dateManagerInstance) {
@@ -227,8 +242,6 @@ const initializeDateManager = async () => {
 	gettingDates = true;
 	try {
 		const eventDatePosts = await getEventDatePosts();
-		console.log('eventDatePosts from getEventDatePosts:', eventDatePosts);
-		console.log('dateManager function:', dateManager);
 
 		// Get current post meta to pass to dateManager for sync
 		const currentPostId = window?.wp?.data?.select('core/editor')?.getCurrentPostId();
@@ -246,7 +259,6 @@ const initializeDateManager = async () => {
 		};
 
 		dateManagerInstance = dateManager(eventDatePosts, currentTimezone, metaSync);
-		console.log('dateManagerInstance after creation:', dateManagerInstance);
 		return dateManagerInstance;
 	} catch (error) {
 		console.error('Error initializing date manager:', error);
@@ -257,29 +269,31 @@ const initializeDateManager = async () => {
 };
 
 /**
- * Register: a Gutenberg Block.
+ * Registers the Event Info Gutenberg block.
  *
- * Registers a new block provided a unique name and an object defining its
- * behavior. Once registered, the block is made editor as an option to any
- * editor interface where blocks are implemented.
+ * Creates a custom block for event information management including dates,
+ * times, locations, venues, and related settings. The block provides both
+ * edit and preview modes with extensive customization options.
  *
- * @link https://wordpress.org/gutenberg/handbook/block-api/
- * @param {string} name     Block name.
- * @param {Object} settings Block settings.
- * @return {?WPBlock}          The block, if it has been successfully
- *                             registered; otherwise `undefined`.
+ * @since 1.0.0
+ *
+ * @see https://wordpress.org/gutenberg/handbook/block-api/
  */
 registerBlockType('simple-events/event-info', {
 	/**
-	 * The edit function describes the structure of your block in the context of the editor.
-	 * This represents what the editor will render when the block is used.
+	 * Block edit function.
 	 *
-	 * The "edit" property must be a valid function.
+	 * Defines the structure and behavior of the Event Info block in the editor.
+	 * Manages event dates through a date manager instance, handles post meta
+	 * synchronization, and provides interfaces for editing event information
+	 * including dates, times, locations, venues, and display options.
 	 *
-	 * @link https://wordpress.org/gutenberg/handbook/block-api/block-edit-save/
+	 * @since 1.0.0
 	 *
-	 * @param {Object} props Props.
-	 * @return {JSX.Element} JSX Component.
+	 * @param {Object} props               Block properties.
+	 * @param {Object} props.attributes    Block attributes including editMode and showOnFrontEnd.
+	 * @param {Function} props.setAttributes Function to update block attributes.
+	 * @return {JSX.Element} The block editor interface.
 	 */
 	edit: (props) => {
 		const { attributes, setAttributes } = props;
@@ -311,10 +325,8 @@ registerBlockType('simple-events/event-info', {
 		useEffect(() => {
 			const saveDatesOnPostSave = async () => {
 				if (isSavingPost && !isAutosavingPost && dateManagerState?.getCurrentDates()?.dates) {
-					console.log('Post is being saved, saving event dates...');
 					try {
 						await saveEventDatesOnPostSave(dateManagerState.getCurrentDates().dates, dateManagerState);
-						console.log('Event dates saved successfully on post save');
 					} catch (error) {
 						console.error('Failed to save event dates on post save:', error);
 					}
@@ -371,10 +383,26 @@ registerBlockType('simple-events/event-info', {
 			}
 		}, [dateManagerReady, isGettingDates]);
 
+		/**
+		 * Handles the Done button click event.
+		 *
+		 * Exits edit mode by setting the editMode attribute to false.
+		 *
+		 * @since 1.0.0
+		 */
 		const onDone = () => {
 			setAttributes({ editMode: false });
 		};
 
+		/**
+		 * Handles event location input changes.
+		 *
+		 * Updates the se_event_location meta field when the location input changes.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param {string} value The new location value.
+		 */
 		const onChangeEventLocation = (value) => {
 			setMeta({
 				...meta,
@@ -382,6 +410,16 @@ registerBlockType('simple-events/event-info', {
 			});
 		};
 
+		/**
+		 * Renders the block toolbar controls.
+		 *
+		 * Creates the edit and visibility toggle buttons that appear in the
+		 * block toolbar when the block is selected.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @return {JSX.Element} The BlockControls component with toolbar buttons.
+		 */
 		const getBlockControls = () => (
 			<BlockControls>
 				<Toolbar
@@ -412,6 +450,14 @@ registerBlockType('simple-events/event-info', {
 		);
 
 		// Wrapper functions to trigger re-renders when dateManager state changes
+		/**
+		 * Handles adding a new date to the event.
+		 *
+		 * Calls the date manager's addDate method and triggers a re-render
+		 * by incrementing the refresh counter.
+		 *
+		 * @since 2.0.0
+		 */
 		const handleAddDate = () => {
 			if (dateManagerState?.addDate) {
 				dateManagerState.addDate();
@@ -419,6 +465,14 @@ registerBlockType('simple-events/event-info', {
 			}
 		};
 
+		/**
+		 * Handles reverting date changes.
+		 *
+		 * Calls the date manager's revertDates method and triggers a re-render
+		 * by incrementing the refresh counter.
+		 *
+		 * @since 2.0.0
+		 */
 		const handleRevertDates = () => {
 			if (dateManagerState?.revertDates) {
 				dateManagerState.revertDates();
@@ -462,7 +516,16 @@ registerBlockType('simple-events/event-info', {
 			}
 		} : null;
 
-		// Unsaved Changes Warning Component
+		/**
+		 * Renders the unsaved changes warning component.
+		 *
+		 * Displays a warning message when the date manager has unsaved changes,
+		 * informing the user that they need to save the post to persist changes.
+		 *
+		 * @since 2.0.0
+		 *
+		 * @return {JSX.Element|null} Warning component or null if no unsaved changes.
+		 */
 		const UnsavedChangesWarning = () => {
 			if (!dateManagerState?.getCurrentDates()?.isDirty) {
 				return null;
@@ -496,8 +559,21 @@ registerBlockType('simple-events/event-info', {
 			);
 		};
 
+		/**
+		 * Renders the event date/time component.
+		 *
+		 * Creates a list of DateTimeGroupNew components for each event date,
+		 * sorted by start date. Each component allows editing of individual
+		 * date and time information.
+		 *
+		 * @since 2.0.0
+		 *
+		 * @param {Object} props              Component properties.
+		 * @param {Array}  props.dates        Array of event date objects to render.
+		 * @param {number} props.refreshCounter Counter to force component re-renders.
+		 * @return {JSX.Element} Fragment containing the event dates interface.
+		 */
 		const EventDateTime = ({ dates, refreshCounter }) => {
-			console.log('dates ', dates);
 
 			const datesOutput = [];
 
@@ -508,6 +584,7 @@ registerBlockType('simple-events/event-info', {
 						eventDateTime={date}
 						removeDate={null}
 						hasMultipleDates={dates.length > 1}
+						currentTimezone={dateManagerState?.getCurrentDates()?.timezone ?? meta?.se_event_timezone ?? TIMEZONE}
 						dateManagerInstance={enhancedDateManagerInstance}
 					/>
 				);
@@ -524,6 +601,16 @@ registerBlockType('simple-events/event-info', {
 			);
 		};
 
+		/**
+		 * Renders the block preview mode.
+		 *
+		 * Displays the front-end representation of the block using ServerSideRender
+		 * with the current event data. Includes block controls and unsaved changes warning.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @return {JSX.Element} The preview component with ServerSideRender.
+		 */
 		const renderPreview = () => (
 			<div {...useBlockProps()}>
 				{getBlockControls()}
@@ -548,8 +635,6 @@ registerBlockType('simple-events/event-info', {
 		if (!editMode) {
 			return renderPreview();
 		}
-
-		console.log('dateManagerState', dateManagerState);
 
 		return (
 			<div {...useBlockProps()}>
@@ -798,15 +883,15 @@ registerBlockType('simple-events/event-info', {
 	},
 
 	/**
-	 * The save function defines the way in which the different attributes should be combined
-	 * into the final markup, which is then serialized by Gutenberg into post_content.
+	 * Block save function.
 	 *
-	 * The "save" property must be specified and must be a valid function.
+	 * Defines how the block content is saved to the database. This block
+	 * uses dynamic rendering (ServerSideRender), so the save function
+	 * returns null and all content is generated server-side via PHP.
 	 *
-	 * @link https://wordpress.org/gutenberg/handbook/block-api/block-edit-save/
+	 * @since 1.0.0
 	 *
-	 * @param {Object} props Props.
-	 * @return {Mixed} JSX Frontend HTML.
+	 * @return {null} Returns null as this is a dynamic block.
 	 */
 	save: () => {
 		return null;

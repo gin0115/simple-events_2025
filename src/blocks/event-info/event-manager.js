@@ -3,29 +3,50 @@ import { getStartAndEndDate, createDefaultDate, getDstOffset, TIMEZONE, OFFSET }
 import moment from 'moment';
 
 /**
- * Creates a date manager service for handling event dates with change tracking
+ * Date Manager Service
  *
- * @param {Array} initialDates Initial array of date objects
- * @param {string} timezone Current timezone for the event
- * @param {Object} metaSync Optional meta sync object with meta and setMeta
- * @returns {Object} Date management service
+ * Creates a date manager service for handling event dates with change tracking,
+ * timezone management, and state synchronization. Provides a centralized way to
+ * manage event dates with automatic dirty state tracking and meta synchronization.
+ *
+ * @package SimpleEvents
+ * @since   2.0.0
  */
 
 /**
-	 * Creates a hash for a date object based on its start and end times
-	 *
-	 * @param string start The start time of the date
-	 * @param string end The end time of the date
-	 * @returns {string} A unique hash for the date
-	 */
-	const createDateHash = (start, end) => {
-		// Get the current timestamp.
-		const timestamp = Date.now();
-		// Create a hash using the start and end times along with the timestamp.
-		const hash = `${start}-${end}-${timestamp}`;
-		return hash;
-	}
+ * Creates a hash for a date object based on its start and end times.
+ *
+ * Generates a unique identifier for a date object using start time, end time,
+ * and current timestamp to ensure uniqueness across date operations.
+ *
+ * @since 2.0.0
+ *
+ * @param {string} start The start time of the date.
+ * @param {string} end   The end time of the date.
+ * @return {string} A unique hash for the date.
+ */
+const createDateHash = (start, end) => {
+	// Get the current timestamp.
+	const timestamp = Date.now();
+	// Create a hash using the start and end times along with the timestamp.
+	const hash = `${start}-${end}-${timestamp}`;
+	return hash;
+}
 
+/**
+ * Creates a date manager instance for handling event dates.
+ *
+ * Provides a comprehensive date management system with change tracking,
+ * timezone conversion, and state synchronization. Manages both original
+ * and current date states with automatic dirty flag tracking.
+ *
+ * @since 2.0.0
+ *
+ * @param {Array}  initialDates Array of initial date objects with dates property.
+ * @param {string} timezone     Current timezone for the event.
+ * @param {Object} metaSync     Optional meta sync object with meta and setMeta properties.
+ * @return {Object} Date management service with public interface.
+ */
 export const dateManager = (initialDates = [], timezone = '', metaSync = null) => {
 
 	// lOOP through dates and add a hash to each date
@@ -43,19 +64,16 @@ export const dateManager = (initialDates = [], timezone = '', metaSync = null) =
 	// Meta sync helpers
 	const { meta, setMeta } = metaSync || {};
 
-	console.log({
-		'originalDates': originalDates,
-		'currentDates': currentDates,
-		'originalTimezone': originalTimezone,
-		'currentTimezone': currentTimezone,
-		'isDirty': isDirty,
-	});
-
 	/**
-	 * Refresh the date manager with new dates
+	 * Refreshes the date manager with new dates.
 	 *
-	 * @param {Array} newDates - The new dates to set
-	 * @returns {Object} Updated date management service
+	 * Updates both original and current date states with new data,
+	 * adds hashes to dates if missing, and resets the dirty flag.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param {Array} newDates Array of new date objects to set.
+	 * @return {Object} Updated date management service state.
 	 */
 	const refreshWithNewDates = (newDates) => {
 		// Add hash to each date if not present
@@ -70,22 +88,18 @@ export const dateManager = (initialDates = [], timezone = '', metaSync = null) =
 		currentDates = clone(newDates);
 		isDirty = false;
 
-		console.log('DateManager refreshed with new dates:', {
-			originalDates,
-			currentDates,
-			originalTimezone,
-			currentTimezone,
-			isDirty
-		});
-
 		return getCurrentDates();
 	};
 
 	/**
-	 * Get the current dates and timezone info
+	 * Gets the current dates and timezone information.
 	 *
-	 * @return {Object}
+	 * Returns the current state including dates, timezone, and dirty flag.
+	 * Considers timezone changes when determining dirty state.
 	 *
+	 * @since 2.0.0
+	 *
+	 * @return {Object} Current dates object with dates, timezone, and isDirty properties.
 	 */
 	const getCurrentDates = () => {
 		const timezoneChanged = currentTimezone !== originalTimezone;
@@ -97,20 +111,31 @@ export const dateManager = (initialDates = [], timezone = '', metaSync = null) =
 	}
 
 	/**
-	 * Find a date by its hash
+	 * Finds a date by its hash identifier.
 	 *
-	 * @param {string} hash The hash of the date to find
-	 * @returns {Object} The date object
+	 * Searches through current dates to find a date object
+	 * matching the provided hash.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param {string} hash The hash identifier of the date to find.
+	 * @return {Object|undefined} The date object if found, undefined otherwise.
 	 */
 	const findDateByHash = (hash) => {
 		return currentDates.find(d => d.hash === hash);
 	}
 
 	/**
-	 * Update the timezone and convert all dates accordingly
+	 * Updates the timezone and converts all dates accordingly.
 	 *
-	 * @param {string} newTimezone The new timezone to set
-	 * @returns {Object} Updated date management service
+	 * Changes the event timezone and adjusts all date timestamps to
+	 * maintain the same local time in the new timezone. Updates meta
+	 * if sync is available.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param {string} newTimezone The new timezone identifier to set.
+	 * @return {Object} Updated date management service state.
 	 */
 	const updateTimezone = (newTimezone) => {
 		const updatedDates = clone(currentDates);
@@ -125,31 +150,31 @@ export const dateManager = (initialDates = [], timezone = '', metaSync = null) =
 
 		updatedDates.forEach((eventDateTime) => {
 			[
-				'datetime_start',
-				'datetime_end',
+				'start_date',
+				'end_date',
 			].forEach((key) => {
-				const dateTime = moment
-					.unix(eventDateTime[key])
-					.utcOffset(
-						getDstOffset(
-							eventDateTime[key],
-							currentTimezone,
-							currentTimezone
-						)
-					);
+				// Get the current DST offset
+				const currentOffset = getDstOffset(
+					eventDateTime[key],
+					currentTimezone,
+					currentTimezone
+				);
 
-				const newOffset =
-					'' !== targetTimezone
-						? getDstOffset(
-							eventDateTime[key],
-							targetTimezone,
-							targetTimezone
-						)
-						: OFFSET;
+				// Get the target DST offset
+				const targetOffset = '' !== targetTimezone
+					? getDstOffset(
+						eventDateTime[key],
+						targetTimezone,
+						targetTimezone
+					)
+					: OFFSET;
 
+				// Apply target timezone offset and keep same local time
 				eventDateTime[key] = String(
-					dateTime
-						.utcOffset(newOffset, true)
+					moment
+						.unix(eventDateTime[key])
+						.utcOffset(currentOffset)
+						.utcOffset(targetOffset, true)
 						.utc()
 						.unix()
 				);
@@ -169,32 +194,26 @@ export const dateManager = (initialDates = [], timezone = '', metaSync = null) =
 			});
 		}
 
-		console.log('Timezone updated:', {
-			newTimezone,
-			updatedDates,
-			currentTimezone,
-			isDirty
-		});
-
 		return getCurrentDates();
 	};
 
 	/**
-	 * Upsert a date to the dates.
+	 * Upserts a date to the event dates collection.
 	 *
-	 * Date
-	 * {
-	 * 	id: null|int,
-	 *  hash: string,
-	 *  start: string,
-	 * 	end: string,
-	 * 	allDay: boolean,
-	 * 	showOnFeed: boolean,
-	 * 	showOnCalendar: boolean
-	 * }
+	 * Updates an existing date if the hash matches, otherwise adds a new date.
+	 * Automatically generates hash if missing and maintains sorted order by start date.
 	 *
-	 * @param {Object} date Date object to add
-	 * @returns {Object} Updated date management service
+	 * @since 2.0.0
+	 *
+	 * @param {Object} date Date object to add or update with properties:
+	 *                      - id: null|int
+	 *                      - hash: string
+	 *                      - start_date: string
+	 *                      - end_date: string
+	 *                      - all_day: boolean
+	 *                      - hide_from_feed: boolean
+	 *                      - hide_from_calendar: boolean
+	 * @return {Object} Updated date management service state.
 	 */
 	const upsertDate = (date) => {
 		// If the date doesnt contain a hash, generate one
@@ -207,11 +226,9 @@ export const dateManager = (initialDates = [], timezone = '', metaSync = null) =
 		if (existingIndex !== -1) {
 			// If it exists, update the date
 			currentDates[existingIndex] = date;
-			console.log('updated date', date);
 		} else {
 			// If it doesn't exist, add the new date
 			currentDates.push(date);
-			console.log('new date', date);
 		}
 		// Mark as dirty
 		isDirty = true;
@@ -219,24 +236,24 @@ export const dateManager = (initialDates = [], timezone = '', metaSync = null) =
 		// Sort the dates by start date
 		currentDates = sortBy(currentDates, 'start_date');
 
-		console.log('currentDates', currentDates);
-		console.log('originalDates', originalDates);
-
 		return getCurrentDates();
 	}
 
 	/**
-	 * Remove a date from the dates.
+	 * Removes a date from the event dates collection.
 	 *
-	 * @param {Object} date Date object to remove
-	 * @returns {Object} Updated date management service
+	 * Finds and removes a date object by its hash identifier,
+	 * then maintains sorted order and marks state as dirty.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param {Object} date Date object to remove (must contain hash property).
+	 * @return {Object} Updated date management service state.
 	 */
 	const removeDate = (date) => {
-		console.log('removeDate', date);
 		// Find the index of the date
 		const index = currentDates.findIndex(d => d.hash === date.hash);
 		if (index !== -1) {
-			console.log('removing date', date, 'index', index);
 			// Remove the date
 			currentDates.splice(index, 1);
 			// Mark as dirty
@@ -248,21 +265,30 @@ export const dateManager = (initialDates = [], timezone = '', metaSync = null) =
 	}
 
 	/**
-	 * Add a new date to the dates.
+	 * Adds a new default date to the event dates collection.
 	 *
-	 * @returns {Object} Updated date management service
+	 * Creates a new date object with default values based on existing dates
+	 * and current timezone, then adds it to the collection.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @return {Object} Updated date management service state.
 	 */
 	const addDate = () => {
 		const newDate = createDefaultDate(currentDates, currentTimezone);
 		upsertDate(newDate);
-		console.log('isDirty', isDirty);
 		return getCurrentDates();
 	}
 
 	/**
-	 * Revert the dates and timezone to the original state.
+	 * Reverts dates and timezone to their original state.
 	 *
-	 * @returns {Object} Updated date management service
+	 * Restores both dates and timezone to their initial values,
+	 * clears dirty flag, and syncs timezone back to meta if available.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @return {Object} Reverted date management service state.
 	 */
 	const revertDates = () => {
 		currentDates = clone(originalDates);
@@ -276,12 +302,6 @@ export const dateManager = (initialDates = [], timezone = '', metaSync = null) =
 				se_event_timezone: originalTimezone
 			});
 		}
-
-		console.log('Reverted to original state:', {
-			originalDates,
-			originalTimezone,
-			isDirty
-		});
 
 		return getCurrentDates();
 	}

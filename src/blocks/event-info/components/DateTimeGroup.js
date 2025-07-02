@@ -1,4 +1,4 @@
-import React, { Fragment, useState } from 'react';
+import React, { Fragment, useState, useEffect } from 'react';
 import { __ } from '@wordpress/i18n';
 import {
 	BaseControl,
@@ -54,6 +54,11 @@ const DateTimeGroupNew = ({
 	const [currentEventDateTime, setCurrentEventDateTime] = useState(eventDateTime);
 	// Add state to track if this date has been removed
 	const [isRemoved, setIsRemoved] = useState(false);
+
+	// Update local state when eventDateTime prop changes (e.g., timezone update)
+	useEffect(() => {
+		setCurrentEventDateTime(eventDateTime);
+	}, [eventDateTime]);
 
 	// console.log({
 	// 	'eventDateTime': eventDateTime,
