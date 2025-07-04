@@ -133,6 +133,8 @@ export const saveEventDates = (dates, dateManagerInstance = null) => {
 			dateManagerInstance.refreshWithNewDates(response.dates);
 		}
 
+
+
 		return response;
 	}).catch((error) => {
 		console.error('Error saving event dates:', error);
@@ -392,6 +394,13 @@ registerBlockType('simple-events/event-info', {
 		 */
 		const onDone = () => {
 			setAttributes({ editMode: false });
+
+			// Update the date attriutes from dateManagerState
+			if (dateManagerState?.getCurrentDates()?.dates) {
+				setAttributes({
+					eventDates: dateManagerState.getCurrentDates().dates,
+				});
+			}
 		};
 
 		/**
@@ -618,6 +627,9 @@ registerBlockType('simple-events/event-info', {
 				<Disabled>
 					<ServerSideRender
 						block="simple-events/event-info"
+						additionalQueryArgs={{
+							context: 'edit'
+						}}
 						attributes={{
 							eventVenue: meta?.se_event_venue,
 							eventLocation: meta?.se_event_location,
@@ -627,6 +639,7 @@ registerBlockType('simple-events/event-info', {
 							externalLinkLabel: meta?.se_event_external_link_label,
 							addCalendarLinks: meta?.se_event_add_calendar_links,
 						}}
+
 					/>
 				</Disabled>
 			</div>

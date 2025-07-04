@@ -88,6 +88,12 @@ export const dateManager = (initialDates = [], timezone = '', metaSync = null) =
 		currentDates = clone(newDates);
 		isDirty = false;
 
+		// If orginal timezone is not the same as current timezone, update current timezone
+		if (originalTimezone !== currentTimezone && '' !== currentTimezone) {
+			originalTimezone = currentTimezone;
+		}
+
+
 		return getCurrentDates();
 	};
 

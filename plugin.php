@@ -3,7 +3,7 @@
  * Simple Events Plugin bootstrap file.
  *
  * @since       1.0.0
- * @version     1.0.54
+ * @version     2.0.0-RC1
  * @author      WordPress.com Special Projects
  * @license     GPL-3.0-or-later
  *
@@ -13,7 +13,7 @@
  * Description:             Event management frontend for WooCommerce Box Office.
  * Requires at least:       6.2
  * Tested up to:            6.4
- * Version:                 1.0.54
+ * Version:                 2.0.0-RC1
  * Requires PHP:            8.0
  * Author:                  WordPress.com Special Projects
  * Author URI:              https://wpspecialprojects.wordpress.com
@@ -31,12 +31,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 function_exists( 'get_plugin_data' ) || require_once ABSPATH . 'wp-admin/includes/plugin.php';
 define( 'SE_METADATA', get_plugin_data( __FILE__, false, false ) );
 
-define( 'SE_VERSION', '1.0.54' );
+define( 'SE_VERSION', '2.0.0' );
 define( 'SE_BASENAME', plugin_basename( __FILE__ ) );
 define( 'SE_PLUGIN_DIR', untrailingslashit( plugin_dir_path( __FILE__ ) ) );
 define( 'SE_PLUGIN_URL', untrailingslashit( plugin_dir_url( __FILE__ ) ) );
 define( 'SE_SRC_PATH', untrailingslashit( SE_PLUGIN_DIR . '/src' ) );
 define( 'SE_TEMPLATE_PATH', untrailingslashit( SE_SRC_PATH . '/templates' ) );
+
+// This should only be updated if there are changes to the way we handle dates and there are migration method to handle.
+// This is used to determine if we need to run migrations.
 define( 'SE_MIGRATION_VERSION', '2.0.0' );
 
 // Load the autoloader.
@@ -87,4 +90,3 @@ function simple_events_activate() {
 	}
 }
 register_activation_hook( __FILE__, 'simple_events_activate' );
-
