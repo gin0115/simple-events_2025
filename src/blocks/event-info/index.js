@@ -618,6 +618,9 @@ registerBlockType('simple-events/event-info', {
 				<Disabled>
 					<ServerSideRender
 						block="simple-events/event-info"
+						additionalQueryArgs={{
+							context: 'edit'
+						}}
 						attributes={{
 							eventVenue: meta?.se_event_venue,
 							eventLocation: meta?.se_event_location,
@@ -627,6 +630,7 @@ registerBlockType('simple-events/event-info', {
 							externalLinkLabel: meta?.se_event_external_link_label,
 							addCalendarLinks: meta?.se_event_add_calendar_links,
 						}}
+
 					/>
 				</Disabled>
 			</div>

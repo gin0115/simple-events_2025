@@ -220,6 +220,12 @@ function se_event_get_past_dates( $event_id, $event_date_id = null, $date_only =
 	$date_display_formatter = new SE_Date_Display_Formatter( $event_id );
 	$now                    = SE_Calendar::get_instance()->create_date_time( 'now' )->format( 'U' );
 
+	if ( $date_only ) {
+		$date_display_formatter->set_date_only( true );
+	} elseif ( $time_only ) {
+		$date_display_formatter->set_time_only( true );
+	}
+
 	// If we dont have any dates.
 	if ( ! $event_dates ) {
 		$event_dates = se_event_get_event_dates( $event_id );
@@ -283,6 +289,14 @@ function se_event_get_formatted_dates( $event_id, $event_date_id = null, $date_o
 	if ( ! $event_dates ) {
 		return '';
 	}
+
+	if ( $date_only ) {
+		$date_display_formatter->set_date_only( true );
+	} elseif ( $time_only ) {
+		$date_display_formatter->set_time_only( true );
+	}
+
+
 	return $date_display_formatter->format_dates( $event_dates );
 }
 

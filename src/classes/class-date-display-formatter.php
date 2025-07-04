@@ -276,7 +276,7 @@ class SE_Date_Display_Formatter {
 		$found_date = array_filter(
 			$event_dates,
 			function ( $date ) {
-				return $date['id'] === $this->event_date_id;
+				return isset( $date['id'] ) && $date['id'] === $this->event_date_id;
 			}
 		);
 

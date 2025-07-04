@@ -249,7 +249,7 @@ class SE_Blocks {
 		$event_dates = se_event_get_event_dates( $post_ID );
 
 		// Previewing?
-		if ( ! empty( $attributes['eventDates'] ) ) {
+		if ( ! empty( $attributes['eventDates'] ) && is_admin() ) {
 			$event_dates = $attributes['eventDates'];
 		}
 		// Set up timezone. Defaults to site settings if the post has no timezone meta.

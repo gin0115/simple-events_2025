@@ -459,23 +459,6 @@ class SE_Event_Post_Type {
 			)
 		);
 
-		// Register meta to denote the event version.
-		register_meta(
-			'post',
-			'se_event_version',
-			array(
-				'show_in_rest'   => true,
-				'single'         => true,
-				'type'           => 'string',
-				'object_subtype' => self::$post_type,
-				'default'        => '1.0.0',
-				'description'    => __(
-					'The version of the event post.',
-					'simple-events'
-				),
-			)
-		);
-
 		// Register event date meta.
 		// start time (timestamp)
 		register_meta(

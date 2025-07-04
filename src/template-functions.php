@@ -423,7 +423,12 @@ function se_event_get_next_event( int $event_id, ?int $event_date_id = null ): ?
 	);
 	// If we dont allow grouping, add the event id to parent not in.
 	if ( ! $allow_grouping ) {
-		$args['parent_not_in'] = array( $event_id );
+		$args['post__not_in'] = array_map(
+			function ( $post ) {
+				return $post['id'];
+			},
+			se_event_get_event_dates( $event_id )
+		);
 	}
 
 	$query = new WP_Query( $args );
