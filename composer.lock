@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "e0ebee1ab74d2ba18324873888e6eb38",
+    "content-hash": "c58913b7b5a16b9d665efe3497cf7b30",
     "packages": [
         {
             "name": "eluceo/ical",
@@ -3260,7 +3260,7 @@
     },
     "prefer-stable": false,
     "prefer-lowest": false,
-    "platform": [],
-    "platform-dev": [],
-    "plugin-api-version": "2.2.0"
+    "platform": {},
+    "platform-dev": {},
+    "plugin-api-version": "2.6.0"
 }
