@@ -68,6 +68,10 @@ registerBlockVariation('core/query', {
 			feedType: 'default',
 		},
 	},
+	providesContext: {
+		'se-events/feedType': 'query.feedType',
+		'se-events/feedOrder': 'query.order',
+	},
 	innerBlocks: [
 		[
 			'core/post-template',
