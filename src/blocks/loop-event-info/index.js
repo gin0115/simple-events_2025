@@ -39,7 +39,7 @@ registerBlockType(metadata, {
 			return {};
 		}, [clientId]);
 
-		const { feedType: contextFeedType = 'default', order: contextOrder = 'asc' } = queryData;
+		const { feedType: contextFeedType = feedType, order: contextOrder = order } = queryData;
 
 		// Update block attributes when context values change
 		useEffect(() => {

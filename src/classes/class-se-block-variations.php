@@ -183,6 +183,8 @@ class SE_Block_Variations {
 		$args['orderby']  = 'meta_value';
 		$args['order']    = $feed_order;
 
+		$args['sub-type'] = self::QUERY_LOOP_EVENTS;
+
 		if ( 'upcoming' === $feed_type ) {
 			$args['meta_query'] = array(
 				array(
@@ -218,6 +220,9 @@ class SE_Block_Variations {
 		// Ensure we only get the correct event date for each parent.
 		add_filter( 'posts_where', array( $this, 'filter_unique_parents_where' ), 10, 2 );
 
+		// Add a filter to modify the posts results.
+		add_filter( 'the_posts', array( $this, 'modify_event_posts' ), 10, 2 );
+
 		/**
 		 * A filter to customize the args of the event query loop.
 		 *
@@ -252,6 +257,28 @@ class SE_Block_Variations {
 		$feed_order = $query->query_vars['feed_order'];
 		$meta_key   = 'desc' === $feed_order ? 'se_event_date_end' : 'se_event_date_start';
 
+		// Get the current time filtering from the main query's meta_query
+		$time_filter = '';
+		$meta_query  = $query->get( 'meta_query' );
+		if ( ! empty( $meta_query ) && is_array( $meta_query ) ) {
+			foreach ( $meta_query as $meta_condition ) {
+				if ( isset( $meta_condition['key'] ) && 'se_event_date_end' === $meta_condition['key'] ) {
+					$compare = $meta_condition['compare'];
+					$value   = $meta_condition['value'];
+
+					// Add the same time filtering to the subquery
+					if ( '>=' === $compare ) {
+						// For upcoming events
+						$time_filter = "AND pm3.meta_value >= {$value}";
+					} elseif ( '<' === $compare ) {
+						// For past events
+						$time_filter = "AND pm3.meta_value < {$value}";
+					}
+					break;
+				}
+			}
+		}
+
 		// Subquery to get the correct post ID for each parent based on sort order
 		$subquery = "
 			AND {$wpdb->posts}.ID IN (
@@ -264,9 +291,11 @@ class SE_Block_Variations {
 					SELECT " . ( 'desc' === $feed_order ? 'MAX' : 'MIN' ) . "(pm2.meta_value)
 					FROM {$wpdb->posts} p2
 					INNER JOIN {$wpdb->postmeta} pm2 ON p2.ID = pm2.post_id AND pm2.meta_key = '{$meta_key}'
+					" . ( $time_filter ? "INNER JOIN {$wpdb->postmeta} pm3 ON p2.ID = pm3.post_id AND pm3.meta_key = 'se_event_date_end'" : '' ) . "
 					WHERE p2.post_parent = p1.post_parent
 					AND p2.post_type = '" . SE_Event_Post_Type::$event_date_post_type . "'
 					AND p2.post_status = 'publish'
+					{$time_filter}
 				)
 				GROUP BY p1.post_parent
 			)
