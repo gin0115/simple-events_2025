@@ -259,12 +259,12 @@ class SE_Block_Variations {
 
 		// Get the current time filtering from the main query's meta_query
 		$time_filter = '';
-		$meta_query = $query->get( 'meta_query' );
+		$meta_query  = $query->get( 'meta_query' );
 		if ( ! empty( $meta_query ) && is_array( $meta_query ) ) {
 			foreach ( $meta_query as $meta_condition ) {
 				if ( isset( $meta_condition['key'] ) && 'se_event_date_end' === $meta_condition['key'] ) {
 					$compare = $meta_condition['compare'];
-					$value = $meta_condition['value'];
+					$value   = $meta_condition['value'];
 
 					// Add the same time filtering to the subquery
 					if ( '>=' === $compare ) {

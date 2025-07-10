@@ -782,9 +782,9 @@ class SE_Blocks {
 	 */
 	public static function loop_event_info_render( $attributes, $content, $block ): string {
 		global $post;
-		$output  = '';
-		$prefix  = '';
-		$post_ID = ( isset( $attributes['thePostId'] ) && $attributes['thePostId'] > 0 ) ? $attributes['thePostId'] : $block->context['postId'];
+		$output        = '';
+		$prefix        = '';
+		$post_ID       = ( isset( $attributes['thePostId'] ) && $attributes['thePostId'] > 0 ) ? $attributes['thePostId'] : $block->context['postId'];
 		$event_date_id = $post instanceof \WP_Post && property_exists( $post, 'event_date_id' ) && is_numeric( $post->event_date_id ) && se_event_treat_each_date_as_own_event()
 			? absint( $post->event_date_id )
 			: null;
@@ -804,7 +804,6 @@ class SE_Blocks {
 				$get_date_function = 'se_event_get_formatted_dates';
 				break;
 		}
-// adump($post_ID, $attributes, $get_date_function, $block->context );
 
 		// Generate output based on meta name.
 		if ( ! empty( $post_ID ) ) {
@@ -986,12 +985,12 @@ class SE_Blocks {
 
 		// Get the current time filtering from the main query's meta_query
 		$time_filter = '';
-		$meta_query = $query->get( 'meta_query' );
+		$meta_query  = $query->get( 'meta_query' );
 		if ( ! empty( $meta_query ) && is_array( $meta_query ) ) {
 			foreach ( $meta_query as $meta_condition ) {
 				if ( isset( $meta_condition['key'] ) && 'se_event_date_end' === $meta_condition['key'] ) {
 					$compare = $meta_condition['compare'];
-					$value = $meta_condition['value'];
+					$value   = $meta_condition['value'];
 
 					// Add the same time filtering to the subquery
 					if ( '>=' === $compare ) {
