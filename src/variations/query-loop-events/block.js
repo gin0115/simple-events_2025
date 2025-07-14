@@ -56,7 +56,7 @@ registerBlockVariation('core/query', {
 			perPage: 6,
 			pages: 0,
 			offset: 0,
-			postType: 'se-event-date',
+			postType: 'se-event',
 			order: 'asc',
 			orderBy: 'date',
 			author: '',
@@ -66,6 +66,7 @@ registerBlockVariation('core/query', {
 			inherit: false,
 			inheritTaxQuery: true,
 			feedType: 'default',
+			_cacheBuster: Date.now(),
 		},
 		eventsPerPage: 6,
 	},
@@ -83,6 +84,7 @@ registerBlockVariation('core/query', {
 	allowedControls: ['taxQuery', 'search', 'feedType'],
 });
 
+
 const FeedTypeControl = ({ attributes, setAttributes, clientId }) => {
 	const { query } = attributes;
 	const feedType = query.feedType || 'default';
@@ -99,6 +101,35 @@ const FeedTypeControl = ({ attributes, setAttributes, clientId }) => {
 		});
 	}, [feedType, feedOrder, clientId]);
 
+
+/**
+ * Gets options for feed order based on the type.
+ * @param {string} type The current feed type.
+ * @returns options for feed order based on the type.
+ */
+const getFeedOrderOptions = (type) => {
+	switch (type) {
+		case 'upcoming':
+			return [
+				{ label: 'Soonest First', value: 'asc' },
+				{ label: 'Furthest in Future First', value: 'desc' },
+			];
+		case 'past':
+			return [
+				{ label: 'Oldest First', value: 'asc' },
+				{ label: 'Most Recent First', value: 'desc' },
+			];
+		case 'default':
+		default:
+			return [
+				{ label: 'Oldest to Newest', value: 'asc' },
+				{ label: 'Newest to Oldest', value: 'desc' },
+			];
+	}
+};
+
+let feedOrderOptions = getFeedOrderOptions(feedType);
+
 	return (
 		<>
 			<SelectControl
@@ -114,6 +145,7 @@ const FeedTypeControl = ({ attributes, setAttributes, clientId }) => {
 						query: {
 							...query,
 							feedType: value,
+							_cacheBuster: Date.now()
 						},
 					});
 				}}
@@ -122,15 +154,13 @@ const FeedTypeControl = ({ attributes, setAttributes, clientId }) => {
 			<SelectControl
 				label="Feed Order"
 				value={feedOrder}
-				options={[
-					{ label: 'Oldest First', value: 'asc' },
-					{ label: 'Newest First', value: 'desc' },
-				]}
+				options={feedOrderOptions}
 				onChange={(value) => {
 					setAttributes({
 						query: {
 							...query,
 							order: value,
+							_cacheBuster: Date.now()
 						},
 					});
 				}}
@@ -145,6 +175,7 @@ const FeedTypeControl = ({ attributes, setAttributes, clientId }) => {
 						query: {
 							...query,
 							perPage: value,
+							_cacheBuster: Date.now()
 						},
 					});
 				}}
