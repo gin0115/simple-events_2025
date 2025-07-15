@@ -270,8 +270,6 @@ class SE_Block_Variations {
 			return $where;
 		}
 
-		// adump( $query->query_vars['unique_parents'] );
-
 		// Skip if treating each date as own event
 		if ( se_event_treat_each_date_as_own_event() ) {
 			return $where;
