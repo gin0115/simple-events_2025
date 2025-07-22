@@ -128,7 +128,7 @@ class SE_Migrate_Events {
 	 *
 	 * @return WP_REST_Response
 	 */
-	public static function migrate_events_rest_all( $request ) {
+	public static function migrate_events_rest_all( $request ) { // phpcs:ignore
 		// Check if we have events to migrate.
 		if ( ! self::has_events_to_migrate() ) {
 			return new WP_REST_Response(
