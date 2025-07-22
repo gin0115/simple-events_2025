@@ -1,6 +1,8 @@
 import { sortBy, isEqual, clone } from 'lodash';
 import { getStartAndEndDate, createDefaultDate, getDstOffset, TIMEZONE, OFFSET } from './date-utils';
 import moment from 'moment';
+import { select } from '@wordpress/data';
+
 
 /**
  * Date Manager Service
@@ -25,11 +27,18 @@ import moment from 'moment';
  * @param {string} end   The end time of the date.
  * @return {string} A unique hash for the date.
  */
-const createDateHash = (start, end) => {
-	// Get the current timestamp.
-	const timestamp = Date.now();
+const createDateHash = (start, end, postId) => {
+	// If the post id is not passed, use the editor post id.
+	if (!postId) {
+		// Generate a radom string with alphanumeric characters.
+		const randomString = Math.random().toString(36).substring(2, 15);
+
+
+
+		postId = select('core/editor').getCurrentPostId() + randomString;
+	}
 	// Create a hash using the start and end times along with the timestamp.
-	const hash = `${start}-${end}-${timestamp}`;
+	const hash = `${start}-${end}-${postId}`;
 	return hash;
 }
 
@@ -48,7 +57,6 @@ const createDateHash = (start, end) => {
  * @return {Object} Date management service with public interface.
  */
 export const dateManager = (initialDates = [], timezone = '', metaSync = null) => {
-
 	// lOOP through dates and add a hash to each date
 	initialDates.dates.forEach(date => {
 		date.hash = createDateHash(date.start_date, date.end_date);
@@ -93,7 +101,6 @@ export const dateManager = (initialDates = [], timezone = '', metaSync = null) =
 			originalTimezone = currentTimezone;
 		}
 
-
 		return getCurrentDates();
 	};
 
@@ -109,11 +116,13 @@ export const dateManager = (initialDates = [], timezone = '', metaSync = null) =
 	 */
 	const getCurrentDates = () => {
 		const timezoneChanged = currentTimezone !== originalTimezone;
-		return {
+		const result = {
 			dates: currentDates,
 			timezone: currentTimezone,
 			isDirty: isDirty || timezoneChanged,
 		};
+
+		return result;
 	}
 
 	/**
