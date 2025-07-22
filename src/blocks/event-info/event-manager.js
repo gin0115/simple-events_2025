@@ -32,9 +32,6 @@ const createDateHash = (start, end, postId) => {
 	if (!postId) {
 		// Generate a radom string with alphanumeric characters.
 		const randomString = Math.random().toString(36).substring(2, 15);
-
-
-
 		postId = select('core/editor').getCurrentPostId() + randomString;
 	}
 	// Create a hash using the start and end times along with the timestamp.
