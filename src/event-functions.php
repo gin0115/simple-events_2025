@@ -778,6 +778,16 @@ function se_event_get_event_dates( $event_id ): array {
  * @return DateTime The created DateTime object.
  */
 function se_create_date_time_from_timestamp( $timestamp, $timezone = null ): DateTime {
+	// If we have a timezone instance, get its name.
+	if ( $timezone instanceof DateTimeZone ) {
+		$timezone = $timezone->getName();
+	}
+
+	// If we still dont have a string or its empty, use the site timezone.
+	if ( ! is_string( $timezone ) || empty( $timezone ) ) {
+		$timezone = null;
+	}
+
 	/**
 	 * If no timezone is passed, use the site timezone
 	 */

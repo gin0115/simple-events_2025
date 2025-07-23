@@ -323,29 +323,66 @@ registerBlockType('simple-events/event-info', {
 			};
 		}, []);
 
-		// Trigger date save when post is being saved
+		// Save dates before post save begins
 		useEffect(() => {
-			const saveDatesOnPostSave = async () => {
-				if (isSavingPost && !isAutosavingPost && dateManagerState?.getCurrentDates()?.dates) {
-					try {
-						await saveEventDatesOnPostSave(dateManagerState.getCurrentDates().dates, dateManagerState);
-					} catch (error) {
-						console.error('Failed to save event dates on post save:', error);
-					}
-				}
-			};
+			let wasSaving = false;
+			let dateSavePromise = null;
 
-			saveDatesOnPostSave();
-		}, [isSavingPost, isAutosavingPost, dateManagerState]);
+			const unsubscribe = window.wp.data.subscribe(() => {
+				const { isSavingPost, isAutosavingPost } = window.wp.data.select('core/editor');
+				const currentSaving = isSavingPost();
+				const currentAutosaving = isAutosavingPost();
+
+				// Detect when save is about to start (transition from false to true)
+				if (currentSaving && !currentAutosaving && !wasSaving && dateManagerState?.getCurrentDates()?.dates) {
+					// Save dates immediately before post save continues
+					dateSavePromise = saveEventDatesOnPostSave(dateManagerState.getCurrentDates().dates, dateManagerState)
+						.then((savedDates) => {
+							if (savedDates && savedDates.dates) {
+								setAttributes({
+									eventDates: savedDates.dates
+								});
+							}
+							dateSavePromise = null;
+						})
+						.catch((error) => {
+							console.error('Failed to save event dates before post save:', error);
+							dateSavePromise = null;
+						});
+				}
+
+				// Detect when save finishes but date sync is still in progress
+				if (!currentSaving && wasSaving && dateSavePromise) {
+					// Wait for date sync to complete, then save again
+					dateSavePromise.then(() => {
+						// Trigger another post save to include the updated dates
+						window.wp.data.dispatch('core/editor').savePost();
+					});
+				}
+
+				wasSaving = currentSaving;
+			});
+
+			return () => unsubscribe();
+		}, [dateManagerState, setAttributes]);
 
 		// Sync dateManagerState dates to block attributes
 		useEffect(() => {
 			if (dateManagerState?.getCurrentDates()?.dates) {
-				setAttributes({
-					eventDates: dateManagerState.getCurrentDates().dates
-				});
+				// Get current block attributes
+				const currentEventDates = attributes.eventDates || [];
+				const newEventDates = dateManagerState.getCurrentDates().dates;
+
+				// Compare the dates to see if they're actually different
+				const datesChanged = JSON.stringify(currentEventDates) !== JSON.stringify(newEventDates);
+
+				if (datesChanged) {
+					setAttributes({
+						eventDates: newEventDates
+					});
+				}
 			}
-		}, [dateManagerState, refreshCounter, setAttributes]);
+		}, [dateManagerState, refreshCounter, setAttributes, attributes.eventDates]);
 
 		// Check if we should be in edit mode based on missing data
 		useEffect(() => {
@@ -372,7 +409,7 @@ registerBlockType('simple-events/event-info', {
 					setDateManagerReady(true);
 					setDateManagerState(manager);
 				} catch (error) {
-					console.error('Failed to initialize date manager:', error);
+					console.error('❌ Failed to initialize date manager:', error);
 				} finally {
 					setIsGettingDates(false);
 				}
@@ -534,7 +571,9 @@ registerBlockType('simple-events/event-info', {
 		 * @return {JSX.Element|null} Warning component or null if no unsaved changes.
 		 */
 		const UnsavedChangesWarning = () => {
-			if (!dateManagerState?.getCurrentDates()?.isDirty) {
+			const isDirty = dateManagerState?.getCurrentDates()?.isDirty;
+
+			if (!isDirty) {
 				return null;
 			}
 
@@ -618,30 +657,33 @@ registerBlockType('simple-events/event-info', {
 		 *
 		 * @return {JSX.Element} The preview component with ServerSideRender.
 		 */
-		const renderPreview = () => (
-			<div {...useBlockProps()}>
-				{getBlockControls()}
-				<UnsavedChangesWarning />
-				<Disabled>
-					<ServerSideRender
-						block="simple-events/event-info"
-						additionalQueryArgs={{
-							context: 'edit'
-						}}
-						attributes={{
-							eventVenue: meta?.se_event_venue,
-							eventLocation: meta?.se_event_location,
-							eventDates: dateManagerState?.getCurrentDates()?.dates,
-							eventTimezone: dateManagerState?.getCurrentDates()?.timezone ?? meta?.se_event_timezone,
-							externalLink: meta?.se_event_external_link,
-							externalLinkLabel: meta?.se_event_external_link_label,
-							addCalendarLinks: meta?.se_event_add_calendar_links,
-						}}
+		const renderPreview = () => {
+			const attributes = {
+				eventVenue: meta?.se_event_venue,
+				eventLocation: meta?.se_event_location,
+				eventDates: dateManagerState?.getCurrentDates()?.dates,
+				eventTimezone: dateManagerState?.getCurrentDates()?.timezone ?? meta?.se_event_timezone,
+				externalLink: meta?.se_event_external_link,
+				externalLinkLabel: meta?.se_event_external_link_label,
+				addCalendarLinks: meta?.se_event_add_calendar_links,
+			};
 
-					/>
-				</Disabled>
-			</div>
-		);
+			return (
+				<div {...useBlockProps()}>
+					{getBlockControls()}
+					<UnsavedChangesWarning />
+					<Disabled>
+						<ServerSideRender
+							block="simple-events/event-info"
+							additionalQueryArgs={{
+								context: 'edit'
+							}}
+							attributes={attributes}
+						/>
+					</Disabled>
+				</div>
+			);
+		};
 
 		if (!editMode) {
 			return renderPreview();
