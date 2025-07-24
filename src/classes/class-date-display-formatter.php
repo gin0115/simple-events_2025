@@ -355,7 +355,6 @@ class SE_Date_Display_Formatter {
 		}
 
 		$output .= $this->use_html_in_date_output ? '</ul>' : '';
-
 		return $output;
 	}
 
@@ -480,7 +479,7 @@ class SE_Date_Display_Formatter {
 
 				// Lets start compiling the output.
 				$output = '';
-				if( $this->use_html_in_date_output ) {
+				if ( $this->use_html_in_date_output ) {
 
 					// If the date is on the same day, we can just render the date.
 					$output .= '<li><div class="se-event-date-list-item__grouped" data-se_grouped_date_label="' . $time_label . '">';
@@ -488,25 +487,25 @@ class SE_Date_Display_Formatter {
 					$output .= '<div class="se-event-date-list-item__grouped-date">';
 				}
 				$output .= $this->time_only ? '' : $dates_string;
-				if( $this->use_html_in_date_output ) {
+				if ( $this->use_html_in_date_output ) {
 					$output .= '</div>';
 				} else {
 					$output .= ' - ';
 				}
 
 				// Add the time.
-				if( $this->use_html_in_date_output ) {
+				if ( $this->use_html_in_date_output ) {
 					$output .= '<div class="se-event-date-list-item__grouped-time">';
 				}
 				$output .= $this->date_only ? '' : $time_label;
-				if( $this->use_html_in_date_output ) {
+				if ( $this->use_html_in_date_output ) {
 					$output .= '</div>';
 
-					$output          .= '</div>';
-					$output          .= '</li>';
+					$output .= '</div>';
+					$output .= '</li>';
+				} else {
+					$output .= '</br>';
 				}
-
-				// dump( $output );
 
 				$existing_output .= $output;
 			}
@@ -586,9 +585,9 @@ class SE_Date_Display_Formatter {
 		foreach ( $event_dates as $date ) {
 			$item_class = array( 'se-event-date-list-item', $date['id'] === $this->event_date_id ? 'se-event-date-list-item__active' : '' );
 
-			$output    .= $this->use_html_in_date_output
+			$output .= $this->use_html_in_date_output
 				? sprintf( '<li id="se-event-date-list-item-%s" class="%s">%s</li>', $date['id'], implode( ' ', $item_class ), $this->render_single_date( $date ) )
-				:  $this->render_single_date( $date ) . '</br>';
+				: $this->render_single_date( $date ) . '</br>';
 		}
 
 		if ( $this->use_html_in_date_output ) {

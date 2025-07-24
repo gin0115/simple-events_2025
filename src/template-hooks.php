@@ -35,4 +35,3 @@ add_action( 'se_single_content', 'the_content', 20 );
 add_action( 'se_single_content', 'se_template_calendar_links', 30 );
 // Show the next and previous links either above or below content (based on settings).
 add_action( 'se_single_content', 'se_template_event_next_previous', se_event_show_links_above_content() ? 40 : 15 );
-

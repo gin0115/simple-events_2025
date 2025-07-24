@@ -93,8 +93,8 @@ class SE_Event_Query_Utils {
 	/**
 	 * Modify event posts results to convert event date posts to parent events.
 	 *
-	 * @param array    $posts The array of post objects.
-	 * @param WP_Query $query The WP_Query instance.
+	 * @param array    $posts   The array of post objects.
+	 * @param WP_Query $query   The WP_Query instance.
 	 * @param string   $context The context where this is being called ('archive', 'blocks', 'variations').
 	 *
 	 * @return array
@@ -102,17 +102,16 @@ class SE_Event_Query_Utils {
 	public static function modify_event_posts( $posts, $query, $context = 'archive' ) {
 
 		// If not an event or event date, bail.
-		if ( ! in_array( $query->get( 'post_type' ), [SE_Event_Post_Type::$post_type, SE_Event_Post_Type::$event_date_post_type], true ) ) {
+		if ( ! in_array( $query->get( 'post_type' ), array( SE_Event_Post_Type::$post_type, SE_Event_Post_Type::$event_date_post_type ), true ) ) {
 			return $posts;
 		}
 
 		// Check if this is our events query based on context
 		$should_modify = false;
-		// dd( $context );
 		switch ( $context ) {
 			case 'archive':
 				// For archive: modify if unique_parents is set OR if treating each date as own event
-				$should_modify = isset( $query->query_vars['unique_parents'] ) || se_event_treat_each_date_as_own_event() || SE_Event_Post_Type::$post_type === get_post_type();
+				$should_modify = isset( $query->query_vars['unique_parents'] ) || se_event_treat_each_date_as_own_event() || get_post_type() === SE_Event_Post_Type::$post_type;
 				break;
 			case 'blocks':
 				// For blocks: modify if unique_parents is set
@@ -152,7 +151,6 @@ class SE_Event_Query_Utils {
 				$parent->post_modified_gmt = $start_date_gmt;
 				$parent->event_date_id     = $post->ID;
 
-
 				return $parent;
 			},
 			$posts
@@ -182,13 +180,13 @@ class SE_Event_Query_Utils {
 	/**
 	 * Add event query filters to a query.
 	 *
-	 * @param WP_Query $query     The query to add filters to.
+	 * @param WP_Query $query      The query to add filters to.
 	 * @param string   $feed_order The feed order (ASC/DESC).
-	 * @param string   $context   The context ('archive', 'blocks', 'variations').
+	 * @param string   $context    The context ('archive', 'blocks', 'variations').
 	 *
 	 * @return void
 	 */
-	public static function add_event_query_filters( $query, $feed_order, $context = 'archive' ) {
+	public static function add_event_query_filters( $query, $feed_order, $context = 'archive' ) { // phpcs:ignore
 		// Add unique parents filtering if not treating each date as own event
 		if ( ! se_event_treat_each_date_as_own_event() ) {
 			$query->set( 'unique_parents', true );
@@ -216,7 +214,7 @@ class SE_Event_Query_Utils {
 	 *
 	 * @return void
 	 */
-	public static function remove_event_query_filters( $context = 'archive' ) {
+	public static function remove_event_query_filters( $context = 'archive' ) { // phpcs:ignore
 		// Remove filters based on context
 		if ( ! se_event_treat_each_date_as_own_event() ) {
 			remove_filter( 'posts_where', array( __CLASS__, 'filter_unique_parents_where' ), 10 );

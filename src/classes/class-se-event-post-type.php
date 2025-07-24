@@ -615,7 +615,6 @@ class SE_Event_Post_Type {
 			// Values for which passed events should be hidden on Feed.
 			$event_options = array( 'hide_events_on_both', 'hide_events_on_feed', 'on' );
 			if ( isset( $options['hide_past_events'] ) && ! empty( $options['hide_past_events'] ) && in_array( $options['hide_past_events'], $event_options, true ) ) {
-
 				$existing_meta_query = $query->get( 'meta_query' );
 				if ( ! is_array( $existing_meta_query ) ) {
 					$existing_meta_query = array();
