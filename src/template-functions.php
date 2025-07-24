@@ -567,3 +567,25 @@ if ( ! function_exists( 'se_template_event_content' ) ) {
 	}
 }
 
+
+if ( ! function_exists( 'se_fix_se_events_fse_archive_template' ) ) {
+	/**
+	 * Fix the template hierarchy for the SE Events FSE archive.
+	 *
+	 * @param array $templates The template hierarchy.
+	 *
+	 * @return array The modified template hierarchy.
+	 */
+	function se_fix_se_events_fse_archive_template( $templates ) {
+		if ( 'se-event-date' === get_query_var( 'post_type' ) ) {
+			// Create proper hierarchy: archive-se-events.html, then archive.html
+			$custom_hierarchy = array(
+				'archive-se-event.html',
+				'archive.html',
+			);
+
+			return $custom_hierarchy;
+		}
+		return $templates;
+	}
+}
